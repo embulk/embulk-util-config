@@ -4,7 +4,7 @@ apply plugin: "signing"
 
 group = "org.embulk"
 version = "0.1.0-SNAPSHOT"
-description = "Embulk configuration handler for Embulk plugins"
+description = "Embulk configuration processor for Embulk plugins"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
