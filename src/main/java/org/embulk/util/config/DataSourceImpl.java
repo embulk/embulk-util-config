@@ -141,7 +141,12 @@ final class DataSourceImpl implements ConfigSource, TaskSource, TaskReport, Conf
         if (v == null) {
             this.data.set(attrName, null);
         } else {
-            final String vJsonStringified = Compat.toJson(v);  // TODO: DataSource#toJson
+            final String vJsonStringified;
+            try {
+                vJsonStringified = Compat.toJson(v);  // TODO: DataSource#toJson
+            } catch (final IOException ex) {
+                throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
+            }
             if (vJsonStringified == null) {
                 throw new ConfigException(new NullPointerException("DataSource#setNested accepts only valid DataSource."));
             }
@@ -164,7 +169,12 @@ final class DataSourceImpl implements ConfigSource, TaskSource, TaskReport, Conf
         if (other == null) {
             throw new ConfigException(new NullPointerException("DataSource#setAll accepts only non-null value."));
         }
-        final String otherJsonStringified = Compat.toJson(other);  // TODO: DataSource#toJson
+        final String otherJsonStringified;
+        try {
+            otherJsonStringified = Compat.toJson(other);  // TODO: DataSource#toJson
+        } catch (final IOException ex) {
+            throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
+        }
         if (otherJsonStringified == null) {
             throw new ConfigException(new NullPointerException("DataSource#setAll accepts only valid DataSource."));
         }
@@ -200,7 +210,12 @@ final class DataSourceImpl implements ConfigSource, TaskSource, TaskReport, Conf
         if (other == null) {
             throw new ConfigException(new NullPointerException("DataSource#merge accepts only non-null value."));
         }
-        final String otherJsonStringified = Compat.toJson(other);  // DataSource#toJson
+        final String otherJsonStringified;
+        try {
+            otherJsonStringified = Compat.toJson(other);  // DataSource#toJson
+        } catch (final IOException ex) {
+            throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
+        }
         if (otherJsonStringified == null) {
             throw new ConfigException(new NullPointerException("DataSource#merge accepts only valid DataSource."));
         }
@@ -270,7 +285,12 @@ final class DataSourceImpl implements ConfigSource, TaskSource, TaskReport, Conf
             return false;
         }
         final DataSource otherDataSource = (DataSource) other;
-        final String otherJsonStringified = Compat.toJson(otherDataSource);  // TODO: DataSource#toJson
+        final String otherJsonStringified;
+        try {
+            otherJsonStringified = Compat.toJson(otherDataSource);  // TODO: DataSource#toJson
+        } catch (final IOException ex) {
+            throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
+        }
         if (otherJsonStringified == null) {
             return false;
         }

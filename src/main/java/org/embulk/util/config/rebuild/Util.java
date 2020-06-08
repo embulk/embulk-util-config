@@ -89,8 +89,9 @@ final class Util {
         try {
             getterMethod = fromClass.getMethod(getterMethodName);
         } catch (final NoSuchMethodException ex) {
-            throw new NoSuchMethodError(
-                    fromClass.getCanonicalName() + " (" + expectedAncestor + ") does not have " + getterMethodName + "().");
+            throw new IllegalStateException(
+                    fromClass.getCanonicalName() + " (" + expectedAncestor + ") does not have " + getterMethodName + "() : "
+                    + ex.getMessage(), ex);
         }
 
         final Object object;

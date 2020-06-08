@@ -38,6 +38,18 @@ public final class ObjectNodeRebuilder {
         // No instantiation.
     }
 
+    /**
+     * Rebuilds Jackson {@code ObjectNode} on plugin's side from core-side {@code ObjectNode}.
+     *
+     * @throws NullPointerException  if receiving {@code null}
+     * @throws ClassCastException  if the rebuilt object cannot be casted to a corresponding Jackson class on plugin's side,
+     *         or core-side Jackson's getter method does not return an object of an expected class
+     * @throws UnsupportedOperationException  if {@code BinaryNode} or {@code POJONode} is contained in the core-side
+     *         {@code ObjectNode}
+     * @throws IllegalStateException  if {@code MissingNode} or unknown {@code JsonNode} is contained in the core-side
+     *         {@code ObjectNode}, core-side Jackson's getter method throws an unexpected {@code Exception}, or core-side Jackson's
+     *         getter method does not exist unexpectedly
+     */
     public static ObjectNode rebuild(final Object from, final ObjectMapper mapper) {
         if (mapper == null) {
             throw new NullPointerException(ObjectNodeRebuilder.class.getSimpleName() + " received null.");

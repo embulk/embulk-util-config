@@ -16,6 +16,9 @@
 
 package org.embulk.util.config;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -65,14 +68,25 @@ public final class TaskMapper {
      * @return a mapped task instance
      */
     public <T extends Task> T map(final TaskSource task, final Class<T> taskType) {
-        final ObjectNode objectNode = Compat.rebuildObjectNode(task);
+        final ObjectNode objectNode;
+        try {
+            objectNode = Compat.rebuildObjectNode(task);
+        } catch (final IOException ex) {
+            // It should happen only from DataSource#toJson(), not from rebuilding ObjectNode.
+            throw new UncheckedIOException("org.embulk.config.TaskSource#toJson() returned an invalid JSON.", ex);
+        }
 
         final T value;
         try {
             value = this.objectMapper.readValue(objectNode.traverse(), taskType);
-        } catch (final IOException ex) {  // JsonParseException and JsonMappingException are IOException.
-            // For tasks, not a ConfigException.
-            throw new UncheckedIOException(ex);
+        } catch (final JsonMappingException ex) {
+            throw new UncheckedIOException("Failed to map a JSON value into some object.", ex);
+        } catch (final JsonParseException ex) {
+            throw new UncheckedIOException("Unexpected failure in parsing ObjectNode rebuilt from org.embulk.config.TaskSource.", ex);
+        } catch (final JsonProcessingException ex) {
+            throw new UncheckedIOException("Unexpected failure in processing ObjectNode rebuilt from org.embulk.config.TaskSource.", ex);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Unexpected I/O error in ObjectNode rebuilt from org.embulk.config.TaskSource.", ex);
         }
         return value;
     }

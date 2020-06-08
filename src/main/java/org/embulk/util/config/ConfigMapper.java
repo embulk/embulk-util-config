@@ -16,6 +16,9 @@
 
 package org.embulk.util.config;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -63,13 +66,29 @@ public final class ConfigMapper {
      * @return a mapped task instance
      */
     public <T extends Task> T map(final ConfigSource config, final Class<T> taskType) {
-        final ObjectNode objectNode = Compat.rebuildObjectNode(config);
+        final ObjectNode objectNode;
+        try {
+            objectNode = Compat.rebuildObjectNode(config);
+        } catch (final IOException ex) {
+            // It should happen only from DataSource#toJson(), not from rebuilding ObjectNode.
+            throw new ConfigException("org.embulk.config.ConfigSource#toJson() returned an invalid JSON.", ex);
+        } catch (final RuntimeException ex) {
+            throw new ConfigException("Unexpected failure in reinterpreting ObjectNode from org.embulk.config.ConfigSource.", ex);
+        }
 
         final T value;
         try {
             value = this.objectMapper.readValue(objectNode.traverse(), taskType);
-        } catch (final IOException ex) {  // JsonParseException and JsonMappingException are IOException.
-            throw new ConfigException(ex);
+        } catch (final JsonMappingException ex) {
+            throw new ConfigException("Failed to map a JSON value into some object.", ex);
+        } catch (final JsonParseException ex) {
+            throw new ConfigException("Unexpected failure in parsing ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
+        } catch (final JsonProcessingException ex) {
+            throw new ConfigException("Unexpected failure in processing ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
+        } catch (final IOException ex) {
+            throw new ConfigException("Unexpected I/O error in ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
+        } catch (final RuntimeException ex) {
+            throw new ConfigException("Unexpected failure in ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
         }
 
         if (this.validator != null) {

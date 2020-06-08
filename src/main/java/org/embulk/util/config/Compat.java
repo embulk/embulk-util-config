@@ -16,12 +16,10 @@
 
 package org.embulk.util.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
@@ -39,7 +37,7 @@ final class Compat {
     /**
      * Rebuilds a stringified JSON representation from {@code org.embulk.config.DataSource}.
      */
-    static String toJson(final DataSource source) {
+    static String toJson(final DataSource source) throws IOException {
         final Optional<String> jsonString = callToJsonIfAvailable(source);
         if (jsonString.isPresent()) {
             // In case of newer Embulk versions since v0.10.3 -- `DataSource` has the `toJson` method.
@@ -53,30 +51,29 @@ final class Compat {
         // In this case, it exploits a hack -- it uses the `getObjectNode` method that is only in `DataSourceImpl`
         // since Embulk v0.10.2.
         final ObjectNode objectNode = callGetObjectNodeAndRebuildIfAvailable(source, SIMPLE_MAPPER);
-        try {
-            return SIMPLE_MAPPER.writeValueAsString(objectNode);
-        } catch (final JsonProcessingException ex) {
-            throw new RuntimeException(ex);
-        }
+        return SIMPLE_MAPPER.writeValueAsString(objectNode);  // It can throw JsonProcessingException extending IOException.
     }
 
     /**
      * Rebuilds a JSON {@link com.fasterxml.jackson.databind.ObjectMapper} from {@code org.embulk.config.DataSource}.
+     *
+     * @throws IOException  if failing in parsing a JSON from {@code DataSource#toJson}
+     * @throws NullPointerException  if the parsed JSON is parsed to {@code null}, or receiving {@code null}
+     * @throws ClassCastException  if the parsed JSON is not a JSON object, the rebuilt object cannot be casted to a corresponding
+     *         Jackson class on plugin's side, or core-side Jackson's getter method does not return an object of an expected class
+     * @throws UnsupportedOperationException  if {@code BinaryNode} or {@code POJONode} is contained in the core-side
+     *         {@code ObjectNode}
+     * @throws IllegalStateException  if {@code MissingNode} or unknown {@code JsonNode} is contained in the core-side
+     *         {@code ObjectNode}, core-side Jackson's getter method throws an unexpected {@code Exception}, or core-side Jackson's
+     *         getter method does not exist unexpectedly
      */
-    static ObjectNode rebuildObjectNode(final DataSource source) {
+    static ObjectNode rebuildObjectNode(final DataSource source) throws IOException {
         final Optional<String> jsonString = callToJsonIfAvailable(source);
         if (jsonString.isPresent()) {
             // In case of newer Embulk versions since v0.10.3 -- `DataSource` has the `toJson` method.
             //
             // In this case, it uses the straightforward `toJson` method to rebuild `JsonNode` on the plugin side.
-            final JsonNode jsonNode;
-            try {
-                jsonNode = SIMPLE_MAPPER.readTree(jsonString.get());
-            } catch (final JsonProcessingException ex) {
-                throw new RuntimeException("DataSource#toJson() returned invalid JSON.", ex);
-            } catch (final IOException ex) {
-                throw new UncheckedIOException(ex);
-            }
+            final JsonNode jsonNode = SIMPLE_MAPPER.readTree(jsonString.get());
 
             if (jsonNode == null) {
                 throw new NullPointerException("DataSource#toJson() returned null.");
