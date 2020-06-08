@@ -28,14 +28,14 @@ final class Tasks {
     }
 
     static Optional<String> getFieldNameFromGetter(final String methodName) {
-        if (methodName.startsWith("get")) {
+        if (methodName != null && methodName.startsWith("get")) {
             return Optional.of(methodName.substring(3));
         }
         return Optional.empty();
     }
 
     static Optional<String> getFieldNameFromSetter(final String methodName) {
-        if (methodName.startsWith("set")) {
+        if (methodName != null && methodName.startsWith("set")) {
             return Optional.of(methodName.substring(3));
         }
         return Optional.empty();
