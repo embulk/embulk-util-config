@@ -25,7 +25,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import org.embulk.config.TaskSource;
 
@@ -52,7 +54,10 @@ final class TaskInvocationHandler implements InvocationHandler {
             case "validate":
                 Tasks.assertParameters(method, 0);
                 if (this.validator != null) {
-                    this.validator.validate(proxy);
+                    final Set<ConstraintViolation<Object>> violations = this.validator.validate(proxy);
+                    if (!violations.isEmpty()) {
+                        throw new TaskValidationException(violations);
+                    }
                 }
                 return proxy;
 

@@ -26,7 +26,7 @@ import org.embulk.config.ConfigException;
  */
 public class TaskValidationException extends ConfigException {
     <T> TaskValidationException(final Set<ConstraintViolation<T>> violations) {
-        super("Configuration violates constaints validated in task definition.",
+        super("Configuration violates constraints validated in task definition.",
               new ConstraintViolationException(violations));
     }
 }

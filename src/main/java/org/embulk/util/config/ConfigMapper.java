@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
@@ -92,7 +94,10 @@ public final class ConfigMapper {
         }
 
         if (this.validator != null) {
-            this.validator.validate(value);
+            final Set<ConstraintViolation<T>> violations = this.validator.validate(value);
+            if (!violations.isEmpty()) {
+                throw new TaskValidationException(violations);
+            }
         }
 
         return value;
