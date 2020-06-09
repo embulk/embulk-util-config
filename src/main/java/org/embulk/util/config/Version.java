@@ -22,7 +22,19 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 /**
- * A utility class defining a constant of Jackson's Module version.
+ * A utility class defining a constant {@code JACKSON_MODULE_VERSION} of Jackson's Module version.
+ *
+ * <p>It retrieves the version information from {@code Implementation-Version} in Manifest of the
+ * {@code embulk-util-config} library JAR. If the attribute is unavailable, typically in testing,
+ * it reads the Java System Property {@code "org.embulk.embulk_util_config.version"} instead.
+ *
+ * <p>In case of any error ({@code Exception}) while reading and parsing the Manifest, the constant
+ * {@code JACKSON_MODULE_VERSION} is set {@code com.fasterxml.jackson.core.Version.unknownVersion()}
+ * without reporting any visible error.
+ *
+ * <p>{@code Implementation-Version} is set in the build script ({@code build.gradle}). The version
+ * number in {@code build.gradle} is tested in {@code TestVersion} to confirm the configured version
+ * number follows some required rules.
  */
 final class Version {
     static final com.fasterxml.jackson.core.Version JACKSON_MODULE_VERSION = getVersion();
@@ -38,7 +50,11 @@ final class Version {
     private static com.fasterxml.jackson.core.Version getVersion() {
         try {
             return parseVersion(getImplementationVersion());
-        } catch (final Throwable any) {  // It must not fail.
+        } catch (final Throwable any) {
+            // It must not throw any Exception/Throwable out of getVersion()
+            // because getVersion() is called in the class static context.
+            // Any Exception/Throwable should be caught here, and just return
+            // com.fasterxml.jackson.core.Version.unknownVersion() instead.
             return com.fasterxml.jackson.core.Version.unknownVersion();
         }
     }
