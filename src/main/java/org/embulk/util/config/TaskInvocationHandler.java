@@ -18,8 +18,6 @@ package org.embulk.util.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -106,52 +104,6 @@ final class TaskInvocationHandler implements InvocationHandler {
             throw new IllegalArgumentException("Tried to run a getter " + methodName + ", but the method name is invalid.");
         }
 
-        if (method.isDefault() && !this.taskBackingObjects.containsKey(fieldName.get())) {
-            // If and only if the method has default implementation, and @Config is not annotated there,
-            // it is tried to call the default implementation directly without proxying.
-            //
-            // methodWithDefaultImpl.invoke(proxy) without this hack would cause infinite recursive calls.
-            //
-            // See hints:
-            // https://rmannibucau.wordpress.com/2014/03/27/java-8-default-interface-methods-and-jdk-dynamic-proxies/
-            // https://stackoverflow.com/questions/22614746/how-do-i-invoke-java-8-default-methods-reflectively
-            //
-            // This hack is required to support `org.joda.time.DateTimeZone` in some Tasks, for example
-            // TimestampParser.Task and TimestampParser.TimestampColumnOption.
-            //
-            // TODO: Remove the hack once a cleaner way is found, or Joda-Time is finally removed.
-            // https://github.com/embulk/embulk/issues/890
-            if (CONSTRUCTOR_MethodHandles_Lookup != null) {
-                synchronized (CONSTRUCTOR_MethodHandles_Lookup) {
-                    boolean hasSetAccessible = false;
-                    try {
-                        CONSTRUCTOR_MethodHandles_Lookup.setAccessible(true);
-                        hasSetAccessible = true;
-                    } catch (SecurityException ex) {
-                        // Skip handling default implementation in case of errors.
-                    }
-
-                    if (hasSetAccessible) {
-                        try {
-                            return CONSTRUCTOR_MethodHandles_Lookup
-                                    .newInstance(
-                                        method.getDeclaringClass(),
-                                        MethodHandles.Lookup.PUBLIC
-                                                | MethodHandles.Lookup.PRIVATE
-                                                | MethodHandles.Lookup.PROTECTED
-                                                | MethodHandles.Lookup.PACKAGE)
-                                    .unreflectSpecial(method, method.getDeclaringClass())
-                                    .bindTo(proxy)
-                                    .invokeWithArguments();
-                        } catch (Throwable ex) {
-                            // Skip handling default implementation in case of errors.
-                        } finally {
-                            CONSTRUCTOR_MethodHandles_Lookup.setAccessible(false);
-                        }
-                    }
-                }
-            }
-        }
         Tasks.assertParameters(method, 0);
         return this.taskBackingObjects.get(fieldName.get());
     }
@@ -201,18 +153,6 @@ final class TaskInvocationHandler implements InvocationHandler {
         return this.taskBackingObjects.equals(other.taskBackingObjects);
     }
 
-    static {
-        Constructor<MethodHandles.Lookup> constructorMethodHandlesLookupTemporary = null;
-        try {
-            constructorMethodHandlesLookupTemporary =
-                    MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, int.class);
-        } catch (final NoSuchMethodException | SecurityException ex) {
-            constructorMethodHandlesLookupTemporary = null;
-        } finally {
-            CONSTRUCTOR_MethodHandles_Lookup = constructorMethodHandlesLookupTemporary;
-        }
-    }
-
     private final Class<? extends Task> taskInterface;
 
     /**
@@ -222,6 +162,4 @@ final class TaskInvocationHandler implements InvocationHandler {
 
     private final ObjectMapper objectMapper;
     private final Validator validator;
-
-    private static final Constructor<MethodHandles.Lookup> CONSTRUCTOR_MethodHandles_Lookup;
 }

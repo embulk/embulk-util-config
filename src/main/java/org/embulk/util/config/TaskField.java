@@ -63,9 +63,6 @@ final class TaskField {
         if (getterMethod.getParameterTypes().length != 0) {
             return null;
         }
-        if (getterMethod.isDefault() && getterMethod.getAnnotation(Config.class) == null) {
-            return null;
-        }
 
         final Optional<String> name = Tasks.getFieldNameFromGetter(getterMethod.getName());
         if (!name.isPresent()) {
