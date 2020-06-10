@@ -46,6 +46,7 @@ public class TestConfigMapper {
         legacyConfig.set("long", Long.MAX_VALUE);
         legacyConfig.set("string", "sf");
         legacyConfig.set("optional2", "baz");
+        legacyConfig.set("unexpected", "something");
 
         final ConfigMapper configMapper = configMapperFactory.createConfigMapper();
         final TypeFieldsTask taskFromConfig = configMapper.map(legacyConfig, TypeFieldsTask.class);

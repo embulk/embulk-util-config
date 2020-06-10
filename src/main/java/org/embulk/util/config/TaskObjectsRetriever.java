@@ -85,7 +85,8 @@ final class TaskObjectsRetriever {
      *
      * <p>For that case, the built {@link java.util.Map} is like {@code { "ConfigAsString": "1234", "ConfigAsInteger": 1234, "Someone": "any"}}.
      *
-     * @param parser  {@link com.fasterxml.jackson.core.JsonParser} as a source of the backing {@link java.lang.Object}s
+     * @param parser  {@link com.fasterxml.jackson.core.JsonParser} from {@link com.fasterxml.jackson.databind.JsonDeserializer}
+     *        as a source of the backing {@link java.lang.Object}s, whose "current token" should already be the first token
      * @return {@link java.util.Map} of backing {@link java.lang.Object}s
      * @throws IOException  hoge
      */
@@ -156,7 +157,7 @@ final class TaskObjectsRetriever {
             final JsonToken dummy = parser.nextToken();  // Skip the next token to get the value.
 
             final List<TaskField> taskFieldsForKey = this.taskFieldsFromJsonFieldName.get(key);
-            if (taskFieldsForKey.isEmpty()) {
+            if (taskFieldsForKey == null || taskFieldsForKey.isEmpty()) {
                 parser.skipChildren();
                 continue;
             }
