@@ -271,6 +271,65 @@ final class DataSourceImpl implements ConfigSource, TaskSource, TaskReport, Conf
         }
     }
 
+    /**
+     * Implemented for compatibility with older {@code DataSource#getObjectNode} to work with Embulk v0.9.23.
+     *
+     * <p>{@code org.embulk.util.config.DataSourceImpl#getObjectNode} of {@code embulk-util-config} could be called
+     * in v0.9, v0.10.0, and v0.10.1. It happens in {@code org.embulk.config.DataSourceSerDe.DataSourceSerializer}
+     * of {@code embulk-core}.
+     *
+     * <ul>
+     * <li><a href="https://github.com/embulk/embulk/blob/v0.9.23/embulk-core/src/main/java/org/embulk/config/DataSourceSerDe.java#L73">v0.9.23</a>
+     * <li><a href="https://github.com/embulk/embulk/blob/v0.10.0/embulk-core/src/main/java/org/embulk/config/DataSourceSerDe.java#L73">v0.10.0</a>
+     * <li><a href="https://github.com/embulk/embulk/blob/v0.10.1/embulk-core/src/main/java/org/embulk/config/DataSourceSerDe.java#L73">v0.10.0</a>
+     * </ul>
+     *
+     * <p>We initially did not expect it happens because Embulk configs are usually processed :
+     *
+     * <ol>
+     * <li>{@code ConfigSource} is initially given from {@code embulk-core} as a parameter of {@code InputPlugin#transaction}.
+     *   <ul>
+     *   <li>It's always {@code embulk-core}'s {@code DataSourceImpl}.
+     *   </ul>
+     * <li>The {@code ConfigSource} is processed into {@code Task} (ex. in {@code InputPlugin#transaction}).
+     *   <ul>
+     *   <li>If processed by {@code embulk-core}, it's {@code embulk-core}'s {@code Task}.
+     *   <li>If processed by {@code embulk-util-config}, it's {@code embulk-util-config}'s {@code Task}.
+     *   </ul>
+     * <li>The {@code Task} is dumped into {@code TaskSource} (ex. in the end of {@code InputPlugin#transaction}).
+     *   <ul>
+     *   <li>If processed by {@code embulk-core}, it's {@code embulk-core}'s {@code DataSourceImpl}.
+     *   <li>If processed by {@code embulk-util-config}, it's {@code embulk-util-config}'s {@code DataSourceImpl}.
+     *   </ul>
+     * <li>The {@code TaskSource} is re-processed into {@code Task} (ex. in {@code InputPlugin#resume}).
+     *   <ul>
+     *   <li>If processed by {@code embulk-core}, it's {@code embulk-core}'s {@code Task}.
+     *   <li>If processed by {@code embulk-util-config}, it's {@code embulk-util-config}'s {@code Task}.
+     *   </ul>
+     * </ol>
+     *
+     * <p>But, in File Input Plugins or File Output Plugins, {@code TaskSource} is reprocessed back to {@code ConfigSource}
+     * to pass for Decoder/Parser/Formatter/Encoder Plugins in {@code embulk-core}. An example of Parser is
+     * <a href="https://github.com/embulk/embulk/blob/v0.9.23/embulk-core/src/main/java/org/embulk/spi/FileInputRunner.java#L107">
+     * {@code FileInputRunner} in v0.9.23</a>. {@code org.embulk.config.DataSourceSerDe.DataSourceSerializer} is used there.
+     *
+     * <p>Then, to run this library at least with Embulk v0.9.23, this {@code org.embulk.util.config.DataSourceImpl} has to
+     * implement {@code getObjectNode} although it does not "Override" {@code DataSource}'s in Java language's semantics.
+     *
+     * <p>Returning the internal {@code ObjectNode} instance is okay in Embulk v0.9.23 because the core and plugins share
+     * Jackson classes in Embulk v0.9.23. The class loading situation will change in later Embulk v0.10, but at that time,
+     * {@code getObjectNode} will not be called there.
+     *
+     * <p>Unfortunately, this library does not work with Embulk v0.10.2 because Embulk v0.10.2 checks the class too strictly in
+     * <a href="https://github.com/embulk/embulk/blob/v0.10.2/embulk-core/src/main/java/org/embulk/config/DataSourceSerDe.java#L74">
+     * {@code org.embulk.config.DataSourceSerDe.DataSourceSerializer}</a>. But, we accept it as v0.10 is a development series.
+     */
+    // TODO: Remove this implementation after most users drop Embulk v0.9.23.
+    @Deprecated
+    public ObjectNode getObjectNode() {
+        return this.data;
+    }
+
     @Override
     public String toString() {
         return this.data.toString();
