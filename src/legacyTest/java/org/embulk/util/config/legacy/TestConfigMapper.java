@@ -19,8 +19,13 @@ package org.embulk.util.config.legacy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Optional;
+import javax.validation.Validation;
+import javax.validation.constraints.Max;
+
+import org.apache.bval.jsr303.ApacheValidationProvider;
 import org.embulk.EmbulkTestRuntime;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
@@ -28,6 +33,7 @@ import org.embulk.util.config.ConfigMapper;
 import org.embulk.util.config.ConfigMapperFactory;
 import org.embulk.util.config.Task;
 import org.embulk.util.config.TaskMapper;
+import org.embulk.util.config.TaskValidationException;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -101,6 +107,28 @@ public class TestConfigMapper {
         assertEquals(12049.0, taskFromTask.getDuplicatedInDouble(), 0.00001);
     }
 
+    @Test
+    public void testValidation() {
+        // Here we do not attempt to test all of the JSR 303's validation rules.
+        // This is only to make sure the violation details will be propagated properly
+        // downstream to the caller side through TaskValidationException's message.
+        final ConfigMapper configMapper = ConfigMapperFactory.builder()
+                .addDefaultModules()
+                .withValidator(Validation.byProvider(ApacheValidationProvider.class)
+                        .configure()
+                        .buildValidatorFactory()
+                        .getValidator())
+                .build()
+                .createConfigMapper();
+        final org.embulk.config.ConfigSource maxCapViolatedConfig =
+                org.embulk.spi.Exec.newConfigSource().set("number", 101);
+
+        assertTrue("The exception has to at least contains the property name, the constraint and actual values.",
+                assertThrows(TaskValidationException.class,
+                        () -> configMapper.map(maxCapViolatedConfig, ToBeValidatedTask.class)
+                ).getMessage().matches("(?i).*number.*100.*101.*"));
+    }
+
     private static interface TypeFieldsTask extends Task {
         @Config("boolean")
         boolean getBoolean();
@@ -143,5 +171,9 @@ public class TestConfigMapper {
         public double getDuplicatedInDouble();
     }
 
-    // TODO: Add more tests with validation.
+    private interface ToBeValidatedTask extends Task {
+        @Config("number")
+        @Max(100)
+        Integer getNumber();
+    }
 }
