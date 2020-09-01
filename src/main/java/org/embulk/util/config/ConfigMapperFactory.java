@@ -157,7 +157,7 @@ public final class ConfigMapperFactory {
         objectMapper.registerModule(new TaskDeserializerModule(objectMapper, this.validator));  // Difference from ConfigMapper.
         objectMapper.registerModule(new DataSourceModule(objectMapper));
 
-        return new TaskMapper(objectMapper);
+        return new TaskMapper(objectMapper, this.validator);
     }
 
     private final List<Module> additionalModules;

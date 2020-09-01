@@ -23,6 +23,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+
 import org.embulk.config.TaskSource;
 
 /**
@@ -55,8 +60,11 @@ import org.embulk.config.TaskSource;
  * }}</pre>
  */
 public final class TaskMapper {
-    TaskMapper(final ObjectMapper objectMapper) {
+    private final Validator validator;
+
+    TaskMapper(final ObjectMapper objectMapper, final Validator validator) {
         this.objectMapper = objectMapper;
+        this.validator = validator;
     }
 
     /**
@@ -87,6 +95,13 @@ public final class TaskMapper {
             throw new UncheckedIOException("Unexpected failure in processing ObjectNode rebuilt from org.embulk.config.TaskSource.", ex);
         } catch (final IOException ex) {
             throw new UncheckedIOException("Unexpected I/O error in ObjectNode rebuilt from org.embulk.config.TaskSource.", ex);
+        }
+
+        if (this.validator != null) {
+            final Set<ConstraintViolation<T>> violations = this.validator.validate(value);
+            if (!violations.isEmpty()) {
+                throw new TaskValidationException(violations);
+            }
         }
         return value;
     }
