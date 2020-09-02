@@ -26,7 +26,21 @@ import org.embulk.config.ConfigException;
  */
 public class TaskValidationException extends ConfigException {
     <T> TaskValidationException(final Set<ConstraintViolation<T>> violations) {
-        super("Configuration violates constraints validated in task definition.",
-              new ConstraintViolationException(violations));
+        super(formatMessage(violations), new ConstraintViolationException(violations));
+    }
+
+    private static <T> String formatMessage(Set<ConstraintViolation<T>> violations) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Configuration violates constraints validated in task definition.");
+        for (ConstraintViolation<?> violation : violations) {
+            sb.append(" '");
+            sb.append(violation.getPropertyPath());
+            sb.append("' ");
+            sb.append(violation.getMessage());
+            sb.append(" but got ");
+            sb.append(violation.getInvalidValue());
+            sb.append('.');
+        }
+        return sb.toString();
     }
 }
