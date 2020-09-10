@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.validation.Validator;
+import org.embulk.config.ConfigDiff;
+import org.embulk.config.ConfigSource;
+import org.embulk.config.TaskReport;
+import org.embulk.config.TaskSource;
 
 /**
  * Creates {@link ConfigMapper} and {@link TaskMapper} with required and specified Jackson {@link com.fasterxml.jackson.databind.Module}s and {@link javax.validation.Validator}.
@@ -134,6 +138,59 @@ public final class ConfigMapperFactory {
      * Creates a {@link ConfigMapper} to maps {@code org.embulk.config.ConfigSource} into a task-defining interface that inherits {@link Task}.
      */
     public ConfigMapper createConfigMapper() {
+        final ObjectMapper objectMapper = this.mapperForConfig();
+        return new ConfigMapper(objectMapper, this.validator);
+    }
+
+    /**
+     * Creates a {@link TaskMapper} to maps {@code org.embulk.config.TaskSource} into a task-defining interface that inherits {@link Task}.
+     */
+    public TaskMapper createTaskMapper() {
+        final ObjectMapper objectMapper = this.mapperForTask();
+        return new TaskMapper(objectMapper);
+    }
+
+    /**
+     * Creates an empty {@link org.embulk.config.ConfigDiff} instance.
+     *
+     * <p>It is to replace {@link org.embulk.spi.Exec#newConfigDiff}.
+     */
+    public ConfigDiff newConfigDiff() {
+        final ObjectMapper objectMapper = this.mapperForOthers();
+        return (ConfigDiff) new DataSourceImpl(objectMapper.createObjectNode(), objectMapper);
+    }
+
+    /**
+     * Creates an empty {@link org.embulk.config.ConfigSource} instance.
+     *
+     * <p>It is to replace {@link org.embulk.spi.Exec#newConfigSource}.
+     */
+    public ConfigSource newConfigSource() {
+        final ObjectMapper objectMapper = this.mapperForConfig();
+        return (ConfigSource) new DataSourceImpl(objectMapper.createObjectNode(), objectMapper);
+    }
+
+    /**
+     * Creates an empty {@link org.embulk.config.TaskReport} instance.
+     *
+     * <p>It is to replace {@link org.embulk.spi.Exec#newTaskReport}.
+     */
+    public TaskReport newTaskReport() {
+        final ObjectMapper objectMapper = this.mapperForOthers();
+        return (TaskReport) new DataSourceImpl(objectMapper.createObjectNode(), objectMapper);
+    }
+
+    /**
+     * Creates an empty {@link org.embulk.config.TaskSource} instance.
+     *
+     * <p>It is to replace {@link org.embulk.spi.Exec#newTaskSource}.
+     */
+    public TaskSource newTaskSource() {
+        final ObjectMapper objectMapper = this.mapperForTask();
+        return (TaskSource) new DataSourceImpl(objectMapper.createObjectNode(), objectMapper);
+    }
+
+    private ObjectMapper mapperForConfig() {
         final ObjectMapper objectMapper = new ObjectMapper();
         for (final Module module : this.additionalModules) {
             objectMapper.registerModule(module);
@@ -142,13 +199,10 @@ public final class ConfigMapperFactory {
         objectMapper.registerModule(new ConfigDeserializerModule(objectMapper, this.validator));  // Difference from TaskMapper.
         objectMapper.registerModule(new DataSourceModule(objectMapper));
 
-        return new ConfigMapper(objectMapper, this.validator);
+        return objectMapper;
     }
 
-    /**
-     * Creates a {@link TaskMapper} to maps {@code org.embulk.config.TaskSource} into a task-defining interface that inherits {@link Task}.
-     */
-    public TaskMapper createTaskMapper() {
+    private ObjectMapper mapperForTask() {
         final ObjectMapper objectMapper = new ObjectMapper();
         for (final Module module : this.additionalModules) {
             objectMapper.registerModule(module);
@@ -157,7 +211,17 @@ public final class ConfigMapperFactory {
         objectMapper.registerModule(new TaskDeserializerModule(objectMapper, this.validator));  // Difference from ConfigMapper.
         objectMapper.registerModule(new DataSourceModule(objectMapper));
 
-        return new TaskMapper(objectMapper);
+        return objectMapper;
+    }
+
+    private ObjectMapper mapperForOthers() {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        for (final Module module : this.additionalModules) {
+            objectMapper.registerModule(module);
+        }
+        objectMapper.registerModule(new DataSourceModule(objectMapper));
+
+        return objectMapper;
     }
 
     private final List<Module> additionalModules;

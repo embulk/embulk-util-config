@@ -6,5 +6,5 @@ com.fasterxml.jackson.core:jackson-core:2.6.7
 com.fasterxml.jackson.core:jackson-databind:2.6.7
 com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7
 javax.validation:validation-api:1.1.0.Final
-org.embulk:embulk-api:0.10.12
+org.embulk:embulk-api:0.10.14
 org.msgpack:msgpack-core:0.8.11
