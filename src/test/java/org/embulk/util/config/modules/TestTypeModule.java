@@ -16,7 +16,7 @@
 
 package org.embulk.util.config.modules;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,7 +25,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import java.io.IOException;
 import org.embulk.spi.type.Type;
 import org.embulk.spi.type.Types;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TestTypeModule {
 
