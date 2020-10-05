@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package org.embulk.spi;
+package org.embulk.util.config.units;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
+import org.embulk.spi.Column;
+import org.embulk.spi.Schema;
+import org.embulk.spi.SchemaConfigException;
 import org.embulk.spi.type.Type;
 
 public class SchemaConfig {

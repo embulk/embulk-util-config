@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.embulk.spi;
+package org.embulk.util.config.units;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 import org.embulk.config.ConfigSource;
+import org.embulk.spi.Column;
+import org.embulk.spi.Exec;
 import org.embulk.spi.type.TimestampType;
 import org.embulk.spi.type.Type;
 

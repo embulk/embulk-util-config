@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.spi.util;
+package org.embulk.util.config.modules;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationContext;

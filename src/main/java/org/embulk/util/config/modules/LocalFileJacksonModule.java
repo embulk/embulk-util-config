@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.spi.unit;
+package org.embulk.util.config.modules;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import org.embulk.util.config.units.LocalFile;
 
 public final class LocalFileJacksonModule extends SimpleModule {
     public LocalFileJacksonModule() {

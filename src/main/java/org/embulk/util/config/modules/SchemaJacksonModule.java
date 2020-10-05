@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.spi;
+package org.embulk.util.config.modules;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -31,6 +31,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import org.embulk.spi.Column;
+import org.embulk.spi.Schema;
 
 public final class SchemaJacksonModule extends SimpleModule {
     public SchemaJacksonModule() {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.spi.time;
+package org.embulk.util.config.modules;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.IOException;
+import org.embulk.spi.time.Timestamp;
 
 @Deprecated
 public final class TimestampJacksonModule extends SimpleModule {

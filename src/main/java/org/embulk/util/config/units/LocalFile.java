@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.spi.unit;
+package org.embulk.util.config.units;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

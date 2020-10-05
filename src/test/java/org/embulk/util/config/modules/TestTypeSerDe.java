@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.embulk.spi.type;
+package org.embulk.util.config.modules;
 
 import static org.junit.Assert.assertTrue;
 
@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import java.io.IOException;
+import org.embulk.spi.type.Type;
+import org.embulk.spi.type.Types;
 import org.junit.Test;
 
 public class TestTypeSerDe {
@@ -45,10 +47,10 @@ public class TestTypeSerDe {
 
     @Test
     public void testGetType() throws IOException {
-        HasType type = new HasType(StringType.STRING);
+        HasType type = new HasType(Types.STRING);
         String json = MAPPER.writeValueAsString(type);
         HasType decoded = MAPPER.readValue(json, HasType.class);
-        assertTrue(StringType.STRING == decoded.getType());
+        assertTrue(Types.STRING == decoded.getType());
     }
 
     private static final ObjectMapper MAPPER;
