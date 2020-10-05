@@ -27,19 +27,6 @@ import org.embulk.spi.type.Type;
 import org.embulk.spi.type.Types;
 
 public class TypeDeserializer extends FromStringDeserializer<Type> {
-    private static final Map<String, Type> stringToTypeMap;
-
-    static {
-        ImmutableMap.Builder<String, Type> builder = ImmutableMap.builder();
-        builder.put(Types.BOOLEAN.getName(), Types.BOOLEAN);
-        builder.put(Types.LONG.getName(), Types.LONG);
-        builder.put(Types.DOUBLE.getName(), Types.DOUBLE);
-        builder.put(Types.STRING.getName(), Types.STRING);
-        builder.put(Types.TIMESTAMP.getName(), Types.TIMESTAMP);
-        builder.put(Types.JSON.getName(), Types.JSON);
-        stringToTypeMap = builder.build();
-    }
-
     public TypeDeserializer() {
         super(Type.class);
     }
@@ -55,4 +42,17 @@ public class TypeDeserializer extends FromStringDeserializer<Type> {
         }
         return t;
     }
+
+    static {
+        ImmutableMap.Builder<String, Type> builder = ImmutableMap.builder();
+        builder.put(Types.BOOLEAN.getName(), Types.BOOLEAN);
+        builder.put(Types.LONG.getName(), Types.LONG);
+        builder.put(Types.DOUBLE.getName(), Types.DOUBLE);
+        builder.put(Types.STRING.getName(), Types.STRING);
+        builder.put(Types.TIMESTAMP.getName(), Types.TIMESTAMP);
+        builder.put(Types.JSON.getName(), Types.JSON);
+        stringToTypeMap = builder.build();
+    }
+
+    private static final Map<String, Type> stringToTypeMap;
 }

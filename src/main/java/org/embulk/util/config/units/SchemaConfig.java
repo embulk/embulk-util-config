@@ -27,8 +27,6 @@ import org.embulk.spi.SchemaConfigException;
 import org.embulk.spi.type.Type;
 
 public class SchemaConfig {
-    private final List<ColumnConfig> columns;
-
     @JsonCreator
     public SchemaConfig(List<ColumnConfig> columns) {
         this.columns = columns;
@@ -96,4 +94,6 @@ public class SchemaConfig {
     public int hashCode() {
         return Objects.hashCode(columns);
     }
+
+    private final List<ColumnConfig> columns;
 }

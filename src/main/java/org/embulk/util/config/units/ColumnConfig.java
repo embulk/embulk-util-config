@@ -26,10 +26,6 @@ import org.embulk.spi.type.TimestampType;
 import org.embulk.spi.type.Type;
 
 public class ColumnConfig {
-    private final String name;
-    private final Type type;
-    private final ConfigSource option;
-
     @Deprecated
     public ColumnConfig(String name, Type type, String format) {
         this.name = name;
@@ -116,4 +112,8 @@ public class ColumnConfig {
         return String.format("ColumnConfig[%s, %s]",
                 getName(), getType());
     }
+
+    private final String name;
+    private final Type type;
+    private final ConfigSource option;
 }

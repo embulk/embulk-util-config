@@ -30,6 +30,16 @@ import org.embulk.spi.TempFileException;
 import org.embulk.spi.TempFileSpace;
 
 public class LocalFile {
+    private LocalFile(Path path, byte[] content) {
+        this.path = path;
+        this.content = content;
+    }
+
+    private LocalFile(byte[] content) {
+        this.path = null;
+        this.content = content;
+    }
+
     public static LocalFile of(File path) throws IOException {
         return of(path.toPath());
     }
@@ -48,19 +58,6 @@ public class LocalFile {
 
     public static LocalFile ofContent(String content) {
         return new LocalFile(content.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private Path path;
-    private final byte[] content;
-
-    private LocalFile(Path path, byte[] content) {
-        this.path = path;
-        this.content = content;
-    }
-
-    private LocalFile(byte[] content) {
-        this.path = null;
-        this.content = content;
     }
 
     public File getFile() {
@@ -103,4 +100,8 @@ public class LocalFile {
     public InputStream newContentInputStream() {
         return new ByteArrayInputStream(content);
     }
+
+    private final byte[] content;
+
+    private Path path;
 }
