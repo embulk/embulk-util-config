@@ -30,54 +30,54 @@ import org.embulk.spi.TempFileException;
 import org.embulk.spi.TempFileSpace;
 
 public class LocalFile {
-    private LocalFile(Path path, byte[] content) {
+    private LocalFile(final Path path, final byte[] content) {
         this.path = path;
         this.content = content;
     }
 
-    private LocalFile(byte[] content) {
+    private LocalFile(final byte[] content) {
         this.path = null;
         this.content = content;
     }
 
-    public static LocalFile of(File path) throws IOException {
+    public static LocalFile of(final File path) throws IOException {
         return of(path.toPath());
     }
 
-    public static LocalFile of(Path path) throws IOException {
+    public static LocalFile of(final Path path) throws IOException {
         return new LocalFile(path, Files.readAllBytes(path));
     }
 
-    public static LocalFile of(String path) throws IOException {
+    public static LocalFile of(final String path) throws IOException {
         return of(Paths.get(path));
     }
 
-    public static LocalFile ofContent(byte[] content) {
+    public static LocalFile ofContent(final byte[] content) {
         return new LocalFile(content);
     }
 
-    public static LocalFile ofContent(String content) {
+    public static LocalFile ofContent(final String content) {
         return new LocalFile(content.getBytes(StandardCharsets.UTF_8));
     }
 
     public File getFile() {
-        return getPath(Exec.getTempFileSpace()).toFile();
+        return this.getPath(Exec.getTempFileSpace()).toFile();
     }
 
-    public File getFile(TempFileSpace space) {
-        return getPath(space).toFile();
+    public File getFile(final TempFileSpace space) {
+        return this.getPath(space).toFile();
     }
 
     public Path getPath() {
-        return getPath(Exec.getTempFileSpace());
+        return this.getPath(Exec.getTempFileSpace());
     }
 
-    public synchronized Path getPath(TempFileSpace tempFileSpace) {
-        if (path == null) {
-            Path temp = tempFileSpace.createTempFile().toPath();
+    public synchronized Path getPath(final TempFileSpace tempFileSpace) {
+        if (this.path == null) {
+            final Path temp = tempFileSpace.createTempFile().toPath();
             try {
                 Files.write(temp, content);
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 throw new TempFileException(ex);
             }
             this.path = temp;
@@ -86,19 +86,19 @@ public class LocalFile {
     }
 
     public byte[] getContent() {
-        return content;
+        return this.content;
     }
 
     public String getContentAsString() {
-        return new String(content);
+        return new String(this.content);
     }
 
-    public String getContentAsString(Charset charset) {
-        return new String(content, charset);
+    public String getContentAsString(final Charset charset) {
+        return new String(this.content, charset);
     }
 
     public InputStream newContentInputStream() {
-        return new ByteArrayInputStream(content);
+        return new ByteArrayInputStream(this.content);
     }
 
     private final byte[] content;

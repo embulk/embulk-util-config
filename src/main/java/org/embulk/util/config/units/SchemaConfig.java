@@ -28,71 +28,71 @@ import org.embulk.spi.type.Type;
 
 public class SchemaConfig {
     @JsonCreator
-    public SchemaConfig(List<ColumnConfig> columns) {
+    public SchemaConfig(final List<ColumnConfig> columns) {
         this.columns = columns;
     }
 
     @JsonValue
     public List<ColumnConfig> getColumns() {
-        return columns;
+        return this.columns;
     }
 
     public int size() {
-        return columns.size();
+        return this.columns.size();
     }
 
     public int getColumnCount() {
-        return columns.size();
+        return this.columns.size();
     }
 
-    public ColumnConfig getColumn(int index) {
-        return columns.get(index);
+    public ColumnConfig getColumn(final int index) {
+        return this.columns.get(index);
     }
 
-    public String getColumnName(int index) {
-        return getColumn(index).getName();
+    public String getColumnName(final int index) {
+        return this.getColumn(index).getName();
     }
 
-    public Type getColumnType(int index) {
-        return getColumn(index).getType();
+    public Type getColumnType(final int index) {
+        return this.getColumn(index).getType();
     }
 
     public boolean isEmpty() {
-        return columns.isEmpty();
+        return this.columns.isEmpty();
     }
 
-    public ColumnConfig lookupColumn(String name) {
-        for (ColumnConfig c : columns) {
-            if (c.getName().equals(name)) {
-                return c;
+    public ColumnConfig lookupColumn(final String name) {
+        for (final ColumnConfig column : this.columns) {
+            if (column.getName().equals(name)) {
+                return column;
             }
         }
         throw new SchemaConfigException(String.format("Column '%s' is not found", name));
     }
 
     public Schema toSchema() {
-        ImmutableList.Builder<Column> builder = ImmutableList.builder();
-        for (int i = 0; i < columns.size(); i++) {
-            builder.add(columns.get(i).toColumn(i));
+        final ImmutableList.Builder<Column> builder = ImmutableList.builder();
+        for (int i = 0; i < this.columns.size(); i++) {
+            builder.add(this.columns.get(i).toColumn(i));
         }
         return new Schema(builder.build());
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
+    public boolean equals(final Object otherObject) {
+        if (this == otherObject) {
             return true;
         }
-        if (!(obj instanceof SchemaConfig)) {
+        if (!(otherObject instanceof SchemaConfig)) {
             return false;
         }
-        SchemaConfig other = (SchemaConfig) obj;
-        return Objects.equals(columns, other.columns);
+        final SchemaConfig other = (SchemaConfig) otherObject;
+        return Objects.equals(this.columns, other.columns);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(columns);
+        return Objects.hashCode(this.columns);
     }
 
     private final List<ColumnConfig> columns;

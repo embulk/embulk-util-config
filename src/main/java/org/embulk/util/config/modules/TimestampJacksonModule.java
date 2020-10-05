@@ -35,9 +35,9 @@ public final class TimestampJacksonModule extends SimpleModule {
 
     private static class TimestampSerializer extends JsonSerializer<Timestamp> {
         @Override
-        public void serialize(Timestamp value, JsonGenerator jgen, SerializerProvider provider)
+        public void serialize(final Timestamp value, final JsonGenerator jsonGenerator, final SerializerProvider provider)
                 throws IOException {
-            jgen.writeString(value.toString());
+            jsonGenerator.writeString(value.toString());
         }
     }
 
@@ -47,8 +47,7 @@ public final class TimestampJacksonModule extends SimpleModule {
         }
 
         @Override
-        protected Timestamp _deserialize(String value, DeserializationContext context)
-                throws JsonMappingException {
+        protected Timestamp _deserialize(final String value, final DeserializationContext context) throws JsonMappingException {
             if (value == null) {
                 throw new JsonMappingException("TimestampDeserializer#_deserialize received null unexpectedly.");
             }

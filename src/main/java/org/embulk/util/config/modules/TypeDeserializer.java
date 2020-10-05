@@ -32,27 +32,27 @@ public class TypeDeserializer extends FromStringDeserializer<Type> {
     }
 
     @Override
-    protected Type _deserialize(String value, DeserializationContext context) throws IOException {
-        Type t = stringToTypeMap.get(value);
-        if (t == null) {
+    protected Type _deserialize(final String value, final DeserializationContext context) throws IOException {
+        final Type type = STRING_TO_TYPE.get(value);
+        if (type == null) {
             throw new JsonMappingException(
                     String.format("Unknown type name '%s'. Supported types are: %s",
                                   value,
-                                  Joiner.on(", ").join(stringToTypeMap.keySet())));
+                                  Joiner.on(", ").join(STRING_TO_TYPE.keySet())));
         }
-        return t;
+        return type;
     }
 
     static {
-        ImmutableMap.Builder<String, Type> builder = ImmutableMap.builder();
+        final ImmutableMap.Builder<String, Type> builder = ImmutableMap.builder();
         builder.put(Types.BOOLEAN.getName(), Types.BOOLEAN);
         builder.put(Types.LONG.getName(), Types.LONG);
         builder.put(Types.DOUBLE.getName(), Types.DOUBLE);
         builder.put(Types.STRING.getName(), Types.STRING);
         builder.put(Types.TIMESTAMP.getName(), Types.TIMESTAMP);
         builder.put(Types.JSON.getName(), Types.JSON);
-        stringToTypeMap = builder.build();
+        STRING_TO_TYPE = builder.build();
     }
 
-    private static final Map<String, Type> stringToTypeMap;
+    private static final Map<String, Type> STRING_TO_TYPE;
 }

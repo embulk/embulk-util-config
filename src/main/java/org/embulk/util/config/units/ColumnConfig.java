@@ -27,90 +27,89 @@ import org.embulk.spi.type.Type;
 
 public class ColumnConfig {
     @Deprecated
-    public ColumnConfig(String name, Type type, String format) {
+    public ColumnConfig(final String name, final Type type, final String format) {
         this.name = name;
         this.type = type;
         this.option = Exec.newConfigSource();  // only for backward compatibility
         if (format != null) {
-            option.set("format", format);
+            this.option.set("format", format);
         }
     }
 
-    public ColumnConfig(String name, Type type, ConfigSource option) {
+    public ColumnConfig(final String name, final Type type, final ConfigSource option) {
         this.name = name;
         this.type = type;
         this.option = option;
     }
 
     @JsonCreator
-    public ColumnConfig(ConfigSource conf) {
-        this.name = conf.get(String.class, "name");
-        this.type = conf.get(Type.class, "type");
-        this.option = conf.deepCopy();
-        option.remove("name");
-        option.remove("type");
+    public ColumnConfig(final ConfigSource config) {
+        this.name = config.get(String.class, "name");
+        this.type = config.get(Type.class, "type");
+        this.option = config.deepCopy();
+        this.option.remove("name");
+        this.option.remove("type");
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public Type getType() {
-        return type;
+        return this.type;
     }
 
     public ConfigSource getOption() {
-        return option;
+        return this.option;
     }
 
     @JsonValue
     public ConfigSource getConfigSource() {
-        ConfigSource conf = option.deepCopy();
-        conf.set("name", name);
-        conf.set("type", type);
-        return conf;
+        final ConfigSource config = this.option.deepCopy();
+        config.set("name", this.name);
+        config.set("type", this.type);
+        return config;
     }
 
     @Deprecated
     public String getFormat() {
-        return option.get(String.class, "format", null);
+        return this.option.get(String.class, "format", null);
     }
 
     // TODO: Stop using TimestampType.withFormat.
     @SuppressWarnings("deprecation")  // https://github.com/embulk/embulk/issues/935
-    public Column toColumn(int index) {
-        String format = option.get(String.class, "format", null);
+    public Column toColumn(final int index) {
+        final String format = this.option.get(String.class, "format", null);
         if (type instanceof TimestampType && format != null) {
             // this behavior is only for backward compatibility. TimestampType#getFormat is @Deprecated
-            return new Column(index, name, ((TimestampType) type).withFormat(format));
+            return new Column(index, this.name, ((TimestampType) this.type).withFormat(format));
         } else {
-            return new Column(index, name, type);
+            return new Column(index, this.name, this.type);
         }
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
+    public boolean equals(final Object otherObject) {
+        if (this == otherObject) {
             return true;
         }
-        if (!(obj instanceof ColumnConfig)) {
+        if (!(otherObject instanceof ColumnConfig)) {
             return false;
         }
-        ColumnConfig other = (ColumnConfig) obj;
+        final ColumnConfig other = (ColumnConfig) otherObject;
         return Objects.equals(this.name, other.name)
-                && Objects.equals(type, other.type)
-                && Objects.equals(option, other.option);
+                && Objects.equals(this.type, other.type)
+                && Objects.equals(this.option, other.option);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type);
+        return Objects.hash(this.name, this.type);
     }
 
     @Override
     public String toString() {
-        return String.format("ColumnConfig[%s, %s]",
-                getName(), getType());
+        return String.format("ColumnConfig[%s, %s]", this.getName(), this.getType());
     }
 
     private final String name;

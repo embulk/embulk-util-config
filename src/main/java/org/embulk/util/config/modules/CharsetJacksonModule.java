@@ -34,9 +34,9 @@ public final class CharsetJacksonModule extends SimpleModule {
 
     private static class CharsetSerializer extends JsonSerializer<Charset> {
         @Override
-        public void serialize(Charset value, JsonGenerator jgen, SerializerProvider provider)
+        public void serialize(final Charset value, final JsonGenerator jsonGenerator, final SerializerProvider provider)
                 throws IOException {
-            jgen.writeString(value.name());
+            jsonGenerator.writeString(value.name());
         }
     }
 
@@ -46,12 +46,10 @@ public final class CharsetJacksonModule extends SimpleModule {
         }
 
         @Override
-        protected Charset _deserialize(String value, DeserializationContext context)
-                throws JsonMappingException {
+        protected Charset _deserialize(final String value, final DeserializationContext context) throws JsonMappingException {
             try {
                 return Charset.forName(value);
-            } catch (UnsupportedOperationException ex) {
-                // TODO include link to a document to the message for the list of supported time zones
+            } catch (final UnsupportedOperationException ex) {
                 throw new JsonMappingException(String.format("Unknown charset '%s'", value));
             }
         }

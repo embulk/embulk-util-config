@@ -36,45 +36,51 @@ public final class LocalFileJacksonModule extends SimpleModule {
 
     private static class LocalFileSerializer extends JsonSerializer<LocalFile> {
         @Override
-        public void serialize(LocalFile value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
-            jgen.writeStartObject();
-            jgen.writeFieldName("base64");
-            jgen.writeBinary(value.getContent());
-            jgen.writeEndObject();
+        public void serialize(
+                final LocalFile value,
+                final JsonGenerator jsonGenerator,
+                final SerializerProvider provider) throws IOException {
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeFieldName("base64");
+            jsonGenerator.writeBinary(value.getContent());
+            jsonGenerator.writeEndObject();
         }
     }
 
     private static class LocalFileDeserializer extends JsonDeserializer<LocalFile> {
         @Override
-        public LocalFile deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-            JsonToken t = jp.getCurrentToken();
-            if (t == JsonToken.START_OBJECT) {
-                t = jp.nextToken();
+        public LocalFile deserialize(final JsonParser jsonParser, final DeserializationContext context) throws IOException {
+            final JsonToken currentToken = jsonParser.getCurrentToken();
+            final JsonToken startingToken;
+            if (currentToken == JsonToken.START_OBJECT) {
+                startingToken = jsonParser.nextToken();
+            } else {
+                startingToken = currentToken;
             }
 
-            switch (t) {
+            switch (startingToken) {
                 case VALUE_NULL:
                     return null;
 
                 case FIELD_NAME: {
-                    LocalFile result;
+                    final String keyName = jsonParser.getCurrentName();
 
-                    String keyName = jp.getCurrentName();
+                    final LocalFile result;
                     if ("content".equals(keyName)) {
-                        jp.nextToken();
-                        result = LocalFile.ofContent(jp.getValueAsString());
+                        jsonParser.nextToken();
+                        result = LocalFile.ofContent(jsonParser.getValueAsString());
                     } else if ("base64".equals(keyName)) {
-                        jp.nextToken();
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        jp.readBinaryValue(ctxt.getBase64Variant(), out);
+                        jsonParser.nextToken();
+                        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+                        jsonParser.readBinaryValue(context.getBase64Variant(), out);
                         result = LocalFile.ofContent(out.toByteArray());
                     } else {
-                        throw ctxt.mappingException("Unknown key '" + keyName + "' to deserialize LocalFile");
+                        throw context.mappingException("Unknown key '" + keyName + "' to deserialize LocalFile");
                     }
 
-                    t = jp.nextToken();
-                    if (t != JsonToken.END_OBJECT) {
-                        throw ctxt.mappingException("Unexpected extra map keys to LocalFile");
+                    final JsonToken nextToken = jsonParser.nextToken();
+                    if (nextToken != JsonToken.END_OBJECT) {
+                        throw context.mappingException("Unexpected extra map keys to LocalFile");
                     }
                     return result;
                 }
@@ -82,21 +88,22 @@ public final class LocalFileJacksonModule extends SimpleModule {
                 case END_OBJECT:
                 case START_ARRAY:
                 case END_ARRAY:
-                    throw ctxt.mappingException("Attempted unexpected map or array to LocalFile");
+                    throw context.mappingException("Attempted unexpected map or array to LocalFile");
 
                 case VALUE_EMBEDDED_OBJECT: {
-                    Object obj = jp.getEmbeddedObject();
-                    if (obj == null) {
+                    final Object embeddedObject = jsonParser.getEmbeddedObject();
+                    if (embeddedObject == null) {
                         return null;
                     }
-                    if (LocalFile.class.isAssignableFrom(obj.getClass())) {
-                        return (LocalFile) obj;
+                    if (LocalFile.class.isAssignableFrom(embeddedObject.getClass())) {
+                        return (LocalFile) embeddedObject;
                     }
-                    throw ctxt.mappingException("Don't know how to convert embedded Object of type " + obj.getClass().getName() + " into LocalFile");
+                    throw context.mappingException(
+                            "Don't know how to convert embedded Object of type " + embeddedObject.getClass().getName() + " into LocalFile");
                 }
 
                 default:
-                    return LocalFile.of(jp.getValueAsString());
+                    return LocalFile.of(jsonParser.getValueAsString());
             }
         }
     }
