@@ -20,13 +20,13 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.embulk.spi.Exec;
-import org.embulk.spi.TempFileException;
 import org.embulk.spi.TempFileSpace;
 
 public class LocalFile {
@@ -78,7 +78,7 @@ public class LocalFile {
             try {
                 Files.write(temp, content);
             } catch (final IOException ex) {
-                throw new TempFileException(ex);
+                throw new UncheckedIOException(ex);
             }
             this.path = temp;
         }
