@@ -28,8 +28,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import org.embulk.util.config.units.LocalFile;
 
-public final class LocalFileJacksonModule extends SimpleModule {
-    public LocalFileJacksonModule() {
+public final class LocalFileModule extends SimpleModule {
+    public LocalFileModule() {
         this.addSerializer(LocalFile.class, new LocalFileSerializer());
         this.addDeserializer(LocalFile.class, new LocalFileDeserializer());
     }

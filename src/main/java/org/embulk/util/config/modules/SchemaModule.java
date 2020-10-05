@@ -34,8 +34,8 @@ import java.util.Collections;
 import org.embulk.spi.Column;
 import org.embulk.spi.Schema;
 
-public final class SchemaJacksonModule extends SimpleModule {
-    public SchemaJacksonModule() {
+public final class SchemaModule extends SimpleModule {
+    public SchemaModule() {
         this.addSerializer(Schema.class, new SchemaSerializer());
         this.addDeserializer(Schema.class, new SchemaDeserializer());
     }
@@ -76,7 +76,7 @@ public final class SchemaJacksonModule extends SimpleModule {
 
             final ArrayList<Column> builder = new ArrayList<>();
             for (final JsonNode element : (Iterable<JsonNode>) () -> array.elements()) {
-                builder.add(ColumnJacksonModule.convertJsonNodeToColumn(element, context.getParser()));
+                builder.add(ColumnModule.convertJsonNodeToColumn(element, context.getParser()));
             }
 
             return new Schema(Collections.unmodifiableList(builder));

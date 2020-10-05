@@ -58,6 +58,6 @@ public class TestTypeSerDe {
     static {
         MAPPER = new ObjectMapper();
         MAPPER.registerModule(new Jdk8Module());
-        MAPPER.registerModule(new TypeJacksonModule());
+        MAPPER.registerModule(new TypeModule());
     }
 }

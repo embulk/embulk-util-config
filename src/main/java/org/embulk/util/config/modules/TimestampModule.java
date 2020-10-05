@@ -27,8 +27,8 @@ import java.io.IOException;
 import org.embulk.spi.time.Timestamp;
 
 @Deprecated
-public final class TimestampJacksonModule extends SimpleModule {
-    public TimestampJacksonModule() {
+public final class TimestampModule extends SimpleModule {
+    public TimestampModule() {
         this.addSerializer(Timestamp.class, new TimestampSerializer());
         this.addDeserializer(Timestamp.class, new TimestampDeserializer());
     }

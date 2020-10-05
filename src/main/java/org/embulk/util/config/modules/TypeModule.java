@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.IOException;
 import org.embulk.spi.type.Type;
 
-public final class TypeJacksonModule extends SimpleModule {
-    public TypeJacksonModule() {
+public final class TypeModule extends SimpleModule {
+    public TypeModule() {
         this.addSerializer(Type.class, new TypeSerializer());
         this.addDeserializer(Type.class, new TypeDeserializer());
     }

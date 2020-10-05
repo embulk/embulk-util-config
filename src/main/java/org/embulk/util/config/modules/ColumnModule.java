@@ -38,8 +38,8 @@ import org.embulk.spi.type.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class ColumnJacksonModule extends SimpleModule {
-    public ColumnJacksonModule() {
+public final class ColumnModule extends SimpleModule {
+    public ColumnModule() {
         this.addSerializer(Column.class, new ColumnSerializer());
         this.addDeserializer(Column.class, new ColumnDeserializer());
     }
@@ -120,7 +120,7 @@ public final class ColumnJacksonModule extends SimpleModule {
         STRING_TO_TYPE = Collections.unmodifiableMap(builder);
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(ColumnJacksonModule.class);
+    private static final Logger logger = LoggerFactory.getLogger(ColumnModule.class);
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

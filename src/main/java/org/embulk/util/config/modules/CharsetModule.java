@@ -26,8 +26,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-public final class CharsetJacksonModule extends SimpleModule {
-    public CharsetJacksonModule() {
+public final class CharsetModule extends SimpleModule {
+    public CharsetModule() {
         this.addSerializer(Charset.class, new CharsetSerializer());
         this.addDeserializer(Charset.class, new CharsetDeserializer());
     }
