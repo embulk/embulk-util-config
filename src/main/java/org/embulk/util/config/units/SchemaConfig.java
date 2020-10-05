@@ -18,7 +18,7 @@ package org.embulk.util.config.units;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.embulk.spi.Column;
@@ -71,11 +71,11 @@ public class SchemaConfig {
     }
 
     public Schema toSchema() {
-        final ImmutableList.Builder<Column> builder = ImmutableList.builder();
+        final ArrayList<Column> builder = new ArrayList<>();
         for (int i = 0; i < this.columns.size(); i++) {
             builder.add(this.columns.get(i).toColumn(i));
         }
-        return new Schema(builder.build());
+        return new Schema(builder);
     }
 
     @Override

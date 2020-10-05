@@ -19,9 +19,9 @@ package org.embulk.util.config.modules;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import org.embulk.spi.type.Type;
 import org.embulk.spi.type.Types;
@@ -38,20 +38,20 @@ public class TypeDeserializer extends FromStringDeserializer<Type> {
             throw new JsonMappingException(
                     String.format("Unknown type name '%s'. Supported types are: %s",
                                   value,
-                                  Joiner.on(", ").join(STRING_TO_TYPE.keySet())));
+                                  String.join(", ", STRING_TO_TYPE.keySet())));
         }
         return type;
     }
 
     static {
-        final ImmutableMap.Builder<String, Type> builder = ImmutableMap.builder();
+        final HashMap<String, Type> builder = new HashMap<>();
         builder.put(Types.BOOLEAN.getName(), Types.BOOLEAN);
         builder.put(Types.LONG.getName(), Types.LONG);
         builder.put(Types.DOUBLE.getName(), Types.DOUBLE);
         builder.put(Types.STRING.getName(), Types.STRING);
         builder.put(Types.TIMESTAMP.getName(), Types.TIMESTAMP);
         builder.put(Types.JSON.getName(), Types.JSON);
-        STRING_TO_TYPE = builder.build();
+        STRING_TO_TYPE = Collections.unmodifiableMap(builder);
     }
 
     private static final Map<String, Type> STRING_TO_TYPE;
