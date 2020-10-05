@@ -27,7 +27,7 @@ import org.embulk.spi.type.Type;
 import org.embulk.spi.type.Types;
 import org.junit.Test;
 
-public class TestTypeSerDe {
+public class TestTypeModule {
 
     private static class HasType {
         private Type type;
