@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.config.modules;
 
 import java.util.Collections;
 import java.util.Set;
@@ -14,8 +14,8 @@ import java.util.Set;
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
  * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
  */
-public class TimeZoneIds {
-    private TimeZoneIds() {
+public class JodaDateTimeZones {
+    private JodaDateTimeZones() {
         // No instantiation.
     }
 
