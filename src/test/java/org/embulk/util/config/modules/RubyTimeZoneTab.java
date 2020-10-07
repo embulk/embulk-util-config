@@ -1,23 +1,31 @@
+/*
+ * Copyright 2017 The Embulk project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.embulk.util.config.modules;
 
 /**
- * RubyTimeZoneTab lists from Ruby-compatible timezone names and their time offsets.
+ * A list from Ruby-compatible timezone names and their time offsets.
  *
- * Embulk's timestamp formats are based on Ruby's formats for historical reasons, and kept for compatibility.
- * Embulk maintains its own implementation of Ruby-compatible time parser to be independent from JRuby.
- *
- * This class is intentionally package-private so that plugins do not directly depend.
- *
- * This class is almost reimplementation of Ruby v2.3.1's ext/date/date_parse.c. See its COPYING for license.
- *
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/ext/date/date_parse.c?view=markup">ext/date/date_parse.c</a>
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
- *
- * This class is contributed to the JRuby project before it is refactored on the Embulk side.
- *
- * @see <a href="https://github.com/jruby/jruby/pull/4635">Implement RubyDateParser in Java by muga - Pull Request #4635 - jruby/jruby</a>
+ * <p>It is copied from {@code embulk-core} v0.10.18's {@code org.embulk.spi.time.RubyTimeZoneTab}, and modified a little bit.
  */
 class RubyTimeZoneTab {
+    private RubyTimeZoneTab() {
+        // No instantiation.
+    }
+
     // Ported zones_source in ext/date/date_parse.c
     private static int getOffsetFromZonesSource(String z) {
         switch (z) {
@@ -455,6 +463,4 @@ class RubyTimeZoneTab {
         final int offset = hour * 3600 + min * 60 + sec;
         return sign ? offset : -offset;
     }
-
-    private RubyTimeZoneTab() {}
 }

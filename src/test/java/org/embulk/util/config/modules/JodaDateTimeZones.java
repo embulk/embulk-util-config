@@ -1,34 +1,46 @@
+/*
+ * Copyright 2017 The Embulk project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.embulk.util.config.modules;
 
 import java.util.Collections;
 import java.util.Set;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormat;
 
 /**
- * TimeZoneIds is a utility class for operating with time zones.
+ * A utility class for emulating Embulk's legacy time zone handling with Joda-Time.
  *
- * This class is public only to be called from DynamicColumnSetterFactory and DynamicPageBuilder.
- * It is not guaranteed to use this class from plugins. This class may be moved, renamed, or removed.
- *
- * A part of this class is reimplementation of Ruby v2.3.1's lib/time.rb. See its COPYING for license.
- *
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/lib/time.rb?view=markup">lib/time.rb</a>
- * @see <a href="https://svn.ruby-lang.org/cgi-bin/viewvc.cgi/tags/v2_3_1/COPYING?view=markup">COPYING</a>
+ * <p>It is copied from {@code embulk-core} v0.10.18's {@code org.embulk.spi.time.TimeZoneIds}, and modified a little bit.
  */
-public class JodaDateTimeZones {
+class JodaDateTimeZones {
     private JodaDateTimeZones() {
         // No instantiation.
     }
 
-    public static org.joda.time.DateTimeZone parseJodaDateTimeZone(final String timeZoneName) {
-        org.joda.time.DateTimeZone jodaDateTimeZoneTemporary = null;
+    public static DateTimeZone parseJodaDateTimeZone(final String timeZoneName) {
+        DateTimeZone jodaDateTimeZoneTemporary = null;
         try {
             // Use TimeZone#forID, not TimeZone#getTimeZone.
             // Because getTimeZone returns GMT even if given timezone id is not found.
-            jodaDateTimeZoneTemporary = org.joda.time.DateTimeZone.forID(timeZoneName);
+            jodaDateTimeZoneTemporary = DateTimeZone.forID(timeZoneName);
         } catch (IllegalArgumentException ex) {
             jodaDateTimeZoneTemporary = null;
         }
-        final org.joda.time.DateTimeZone jodaDateTimeZone = jodaDateTimeZoneTemporary;
+        final DateTimeZone jodaDateTimeZone = jodaDateTimeZoneTemporary;
 
         // Embulk has accepted to parse Joda-Time's time zone IDs in Timestamps since v0.2.0
         // although the formats are based on Ruby's strptime. Joda-Time's time zone IDs are
@@ -37,7 +49,7 @@ public class JodaDateTimeZones {
             return jodaDateTimeZone;
 
         } else if (timeZoneName.equals("Z")) {
-            return org.joda.time.DateTimeZone.UTC;
+            return DateTimeZone.UTC;
 
         } else {
             try {
@@ -55,14 +67,14 @@ public class JodaDateTimeZones {
                 //
                 // TODO: Make time zone parsing consistent.
                 // @see <a href="https://github.com/embulk/embulk/issues/860">https://github.com/embulk/embulk/issues/860</a>
-                int rawOffset = (int) org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis(timeZoneName);
+                int rawOffset = (int) DateTimeFormat.forPattern("z").parseMillis(timeZoneName);
                 if (rawOffset == 0) {
-                    return org.joda.time.DateTimeZone.UTC;
+                    return DateTimeZone.UTC;
                 }
                 int offset = rawOffset / -1000;
                 int h = offset / 3600;
                 int m = offset % 3600;
-                return org.joda.time.DateTimeZone.forOffsetHoursMinutes(h, m);
+                return DateTimeZone.forOffsetHoursMinutes(h, m);
             } catch (IllegalArgumentException ex) {
                 // parseMillis failed
             }
@@ -82,13 +94,12 @@ public class JodaDateTimeZones {
             // Some zone IDs (ex. "PDT") are parsed by DateTimeFormat#parseMillis as shown above.
             final int rubyStyleTimeOffsetInSecond = RubyTimeZoneTab.dateZoneToDiff(timeZoneName);
             if (rubyStyleTimeOffsetInSecond != Integer.MIN_VALUE) {
-                return org.joda.time.DateTimeZone.forOffsetMillis(rubyStyleTimeOffsetInSecond * 1000);
+                return DateTimeZone.forOffsetMillis(rubyStyleTimeOffsetInSecond * 1000);
             }
 
             return null;
         }
     }
 
-    private static final Set<String> JODA_TIME_ZONES =
-            Collections.unmodifiableSet(org.joda.time.DateTimeZone.getAvailableIDs());
+    private static final Set<String> JODA_TIME_ZONES = Collections.unmodifiableSet(DateTimeZone.getAvailableIDs());
 }
