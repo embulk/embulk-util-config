@@ -37,8 +37,10 @@ import org.embulk.config.TaskSource;
 /**
  * An implementation of {@code org.embulk.config.DataSource} for instances created mainly from {@link Task#dump()} and
  * {@link Task#toTaskSource()}.
+ *
+ * <p>It is {@code public} so that a reflection access to this class does not cause any error.
  */
-final class DataSourceImpl implements ConfigSource, TaskSource, TaskReport, ConfigDiff {
+public final class DataSourceImpl implements ConfigSource, TaskSource, TaskReport, ConfigDiff {
     DataSourceImpl(final ObjectNode data, final ObjectMapper objectMapper) {
         this.data = data;
         this.objectMapper = objectMapper;

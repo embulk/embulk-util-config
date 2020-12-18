@@ -79,6 +79,9 @@ javadoc {
     // "*NodeRebuilder" classes are unofficial and undocumented while ObjectNodeRebuilder is "public".
     exclude "org/embulk/util/config/rebuild/*.java"
 
+    // "DataSourceImpl" is unofficial and undocumented while it is "public".
+    exclude "org/embulk/util/config/DataSourceImpl.java"
+
     options {
         locale = "en_US"
         encoding = "UTF-8"
