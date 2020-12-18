@@ -25,6 +25,8 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import org.embulk.config.DataSource;
 import org.embulk.util.config.rebuild.ObjectNodeRebuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for compatibility before and after Embulk v0.10.2.
@@ -111,6 +113,8 @@ final class Compat {
             }
             throw new IllegalStateException("DataSource#toJson() threw unexpected Exception.", targetException);
         } catch (final IllegalAccessException ex) {
+            logger.debug("DataSource#toJson is not accessible unexpectedly. DataSource: {}, toJson: {}, ",
+                         source.getClass(), toJson);
             throw new IllegalStateException("DataSource#toJson() is not accessible.", ex);
         }
 
@@ -151,6 +155,8 @@ final class Compat {
             }
             throw new IllegalStateException("DataSourceImpl#getObjectNode() threw unexpected Exception.", targetException);
         } catch (final IllegalAccessException ex) {
+            logger.debug("DataSourceImpl#getObjectNode is not accessible unexpectedly. DataSourceImpl: {}, getObjectNode: {}, ",
+                         source.getClass(), getObjectNode);
             throw new IllegalStateException("DataSourceImpl#getObjectNode() is not accessible.", ex);
         }
 
@@ -192,4 +198,6 @@ final class Compat {
     }
 
     private static final ObjectMapper SIMPLE_MAPPER = new ObjectMapper();
+
+    private static final Logger logger = LoggerFactory.getLogger(Compat.class);
 }
