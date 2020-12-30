@@ -25,6 +25,8 @@ import java.lang.reflect.Method;
 import java.util.Optional;
 import org.embulk.config.DataSource;
 import org.embulk.util.config.rebuild.ObjectNodeRebuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Utility methods for compatibility before and after Embulk v0.10.2.
@@ -93,7 +95,7 @@ final class Compat {
     }
 
     private static Optional<String> callToJsonIfAvailable(final DataSource source) {
-        final Method toJson = getToJsonMethod(source.getClass());
+        final Method toJson = getToJsonMethod();
         if (toJson == null) {
             return Optional.empty();
         }
@@ -111,6 +113,8 @@ final class Compat {
             }
             throw new IllegalStateException("DataSource#toJson() threw unexpected Exception.", targetException);
         } catch (final IllegalAccessException ex) {
+            logger.debug("DataSource#toJson is not accessible unexpectedly. DataSource: {}, toJson: {}, ",
+                         source.getClass(), toJson);
             throw new IllegalStateException("DataSource#toJson() is not accessible.", ex);
         }
 
@@ -151,15 +155,28 @@ final class Compat {
             }
             throw new IllegalStateException("DataSourceImpl#getObjectNode() threw unexpected Exception.", targetException);
         } catch (final IllegalAccessException ex) {
+            logger.debug("DataSourceImpl#getObjectNode is not accessible unexpectedly. DataSourceImpl: {}, getObjectNode: {}, ",
+                         source.getClass(), getObjectNode);
             throw new IllegalStateException("DataSourceImpl#getObjectNode() is not accessible.", ex);
         }
 
         return ObjectNodeRebuilder.rebuild(coreObjectNode, mapper);
     }
 
-    private static Method getToJsonMethod(final Class<? extends DataSource> coreDataSourceImplClass) {
+    private static Method getToJsonMethod() {
         try {
-            return coreDataSourceImplClass.getMethod("toJson");
+            // Getting the "toJson" method from embulk-api's public interface "org.embulk.config.DataSource", not from an implementation class,
+            // for example "org.embulk.(util.)config.DataSourceImpl", so that invoking the method does not throw IllegalAccessException.
+            //
+            // If the method instance is retrieved from a non-public implementation class, invoking it can fail like:
+            //   java.lang.IllegalAccessException:
+            //   Class org.embulk.util.config.Compat can not access a member of class org.embulk.util.config.DataSourceImpl with modifiers "public"
+            //
+            // See also:
+            // https://stackoverflow.com/questions/25020756/java-lang-illegalaccessexception-can-not-access-a-member-of-class-java-util-col
+            //
+            // A method instance retrieved from the public interface "org.embulk.config.DataSource" would solve the problem.
+            return DataSource.class.getMethod("toJson");
         } catch (final NoSuchMethodException ex) {
             // Expected: toJson is not defined in Embulk v0.10.2 or earlier.
             return null;
@@ -168,12 +185,19 @@ final class Compat {
 
     private static Method getGetObjectNodeMethod(final Class<? extends DataSource> coreDataSourceImplClass) {
         try {
+            // Unlike "toJson" above, "getObjectNode" needs to be invoked only for org.embulk.config.DataSourceImpl
+            // because "getObjectNode" is removed from embulk-api's official "org.embul.config.DataSource", and
+            // implemented only in embulk-core's internal "org.embulk.config.DataSourceImpl".
+            //
+            // "org.embulk.config.DataSourceImpl" and its "getObjectNode" have been public.
             return coreDataSourceImplClass.getMethod("getObjectNode");
         } catch (final NoSuchMethodException ex) {
-            // Expected; getObjectNode may be implemented only in org.embulk.config.DataSourceImpl of earlier Embulk.
+            // Expected: getObjectNode may be implemented only in org.embulk.config.DataSourceImpl of earlier Embulk.
             return null;
         }
     }
 
     private static final ObjectMapper SIMPLE_MAPPER = new ObjectMapper();
+
+    private static final Logger logger = LoggerFactory.getLogger(Compat.class);
 }
