@@ -26,6 +26,10 @@ import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
+import org.embulk.util.config.modules.CharsetModule;
+import org.embulk.util.config.modules.LocalFileModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates {@link ConfigMapper} and {@link TaskMapper} with required and specified Jackson {@link com.fasterxml.jackson.databind.Module}s and {@link javax.validation.Validator}.
@@ -55,17 +59,31 @@ public final class ConfigMapperFactory {
         /**
          * Builds {@link ConfigMapperFactory} with Jackson {@link com.fasterxml.jackson.databind.Module}s.
          *
-         * <p>For the time being, only {@link com.fasterxml.jackson.datatype.jdk8.Jdk8Module} is added.
+         * <p>Three Modules, {@link org.embulk.util.config.modules.CharsetModule},
+         * {@link org.embulk.util.config.modules.LocalFileModule}, and {@link com.fasterxml.jackson.datatype.jdk8.Jdk8Module}
+         * are added since {@code embulk-util-config} v0.2.0.
          */
         public Builder addDefaultModules() {
-            // TODO: Add those default Modules.
-            // this.additionalModules.add(new DateTimeZoneModule());
-            // this.additionalModules.add(new TimestampModule());
-            // this.additionalModules.add(new CharsetModule());
-            // this.additionalModules.add(new LocalFileModule());
+            // embulk-core's ModelManager had DateTimeZoneModule here for Joda-Time's DateTimeZone.
+            // DateTimeZoneModule is no longer with embulk-util-config because Joda-Time is not here.
+            // embulk-util-config has ZoneIdModule for java.time.ZoneId instead of DateTimeZoneModule.
+            //
+            // But, the alternative ZoneIdModule is not added by default because it has variations.
+            //   new ZoneId(): not using "legacy" timezone names
+            //   ZoneId.withLegacyZoneNames(): using "legacy" timezone names
+            //
+            // Developers need to choose one of them by themselves.
+
+            // embulk-core's ModelManager had TimestampModule here for org.embulk.spi.time.Timestamp.
+            //
+            // TimestampModule is implemented as org.embulk.util.config.modules.TimestampModule, but
+            // it is not added by default because org.embulk.spi.time.Timestamp is deprecated.
+
+            this.addModule(new CharsetModule());
+            this.addModule(new LocalFileModule());
 
             // com.fasterxml.jackson.datatype.guava.GuavaModule (jackson-datatype-guava) was here in embulk-core.
-            this.additionalModules.add(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module());  // jackson-datatype-jdk8
+            this.addModule(new com.fasterxml.jackson.datatype.jdk8.Jdk8Module());  // jackson-datatype-jdk8
             // com.fasterxml.jackson.datatype.joda.JodaModule (jackson-datatype-joda) was here in embulk-core.
             return this;
         }
@@ -76,6 +94,11 @@ public final class ConfigMapperFactory {
         public Builder addModule(final Module module) {
             if (module == null) {
                 throw new NullPointerException("ConfigMapperFactory.Builder#addModule does not accept null.");
+            }
+            for (final Module m : this.additionalModules) {
+                if (m.getClass().equals(module.getClass())) {
+                    logger.warn("Jackson Module {} is already added. It may be duplicated.", module.getClass());
+                }
             }
             this.additionalModules.add(module);
             return this;
@@ -223,6 +246,8 @@ public final class ConfigMapperFactory {
 
         return objectMapper;
     }
+
+    private static final Logger logger = LoggerFactory.getLogger(ConfigMapperFactory.class);
 
     private final List<Module> additionalModules;
     private final Validator validator;
