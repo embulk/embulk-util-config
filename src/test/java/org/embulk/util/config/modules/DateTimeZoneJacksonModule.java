@@ -1,4 +1,4 @@
-package org.embulk.spi.time;
+package org.embulk.util.config.modules;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.DeserializationContext;
