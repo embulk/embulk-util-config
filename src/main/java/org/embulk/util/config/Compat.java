@@ -55,7 +55,7 @@ final class Compat {
     }
 
     /**
-     * Rebuilds a JSON {@link com.fasterxml.jackson.databind.ObjectMapper} from {@code org.embulk.config.DataSource}.
+     * Rebuilds a JSON {@link com.fasterxml.jackson.databind.node.ObjectNode} from {@code org.embulk.config.DataSource}.
      *
      * @throws IOException  if failing in parsing a JSON from {@code DataSource#toJson}
      * @throws NullPointerException  if the parsed JSON is parsed to {@code null}, or receiving {@code null}
