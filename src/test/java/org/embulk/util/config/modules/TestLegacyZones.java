@@ -20,6 +20,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -464,6 +466,278 @@ public class TestLegacyZones {
         }
     }
 
+    /**
+     * Tests some region names included in Ruby's zonetab.list.
+     */
+    @ParameterizedTest
+    @CsvSource({
+            "ut",
+            "UT",
+            "Ut",
+            "gmt",
+            "GMT",
+            "gmT",
+            "est",
+            "EST",
+            "EsT",
+            "edt",
+            "EDT",
+            "edT",
+            "cst",
+            "CST",
+            "cst",
+            "cdt",
+            "CDT",
+            "CDT",
+            "mst",
+            "MST",
+            "mSt",
+            "mdt",
+            "MDT",
+            "MdT",
+            "pst",
+            "PST",
+            "PST",
+            "pdt",
+            "PDT",
+            "PDT",
+            "a",
+            "A",
+            "b",
+            "B",
+            "c",
+            "C",
+            "d",
+            "D",
+            "e",
+            "E",
+            "f",
+            "F",
+            "g",
+            "G",
+            "h",
+            "H",
+            "i",
+            "I",
+            "k",
+            "K",
+            "l",
+            "L",
+            "m",
+            "M",
+            "n",
+            "N",
+            "o",
+            "O",
+            "p",
+            "P",
+            "q",
+            "Q",
+            "r",
+            "R",
+            "s",
+            "S",
+            "t",
+            "T",
+            "u",
+            "U",
+            "v",
+            "V",
+            "w",
+            "W",
+            "x",
+            "X",
+            "y",
+            "Y",
+            "z",
+            "Z",
+            "utc",
+            "UTC",
+            "Utc",
+            "wet",
+            "WET",
+            "Wet",
+            "at",
+            "AT",
+            "aT",
+            "brst",
+            "BRST",
+            "brST",
+            "ndt",
+            "NDT",
+            "ndt",
+            "art",
+            "ART",
+            "aRt",
+            "adt",
+            "ADT",
+            "adt",
+            "brt",
+            "BRT",
+            "brt",
+            "clst",
+            "CLST",
+            "ClsT",
+            "nst",
+            "NST",
+            "nsT",
+            "ast",
+            "AST",
+            "AST",
+            "clt",
+            "CLT",
+            "cLT",
+            "akdt",
+            "AKDT",
+            "akDt",
+            "ydt",
+            "YDT",
+            "ydt",
+            "akst",
+            "AKST",
+            "Akst",
+            "hadt",
+            "HADT",
+            "HaDt",
+            "hdt",
+            "HDT",
+            "HdT",
+            "yst",
+            "YST",
+            "YsT",
+            "ahst",
+            "AHST",
+            "ahSt",
+            "cat",
+            "CAT",
+            "Cat",
+            "hast",
+            "HAST",
+            "HASt",
+            "hst",
+            "HST",
+            "HsT",
+            "nt",
+            "NT",
+            "Nt",
+            "idlw",
+            "IDLW",
+            "idlw",
+            "bst",
+            "BST",
+            "BsT",
+            "cet",
+            "CET",
+            "CET",
+            "fwt",
+            "FWT",
+            "Fwt",
+            "met",
+            "MET",
+            "MeT",
+            "mewt",
+            "MEWT",
+            "mEwt",
+            "mez",
+            "MEZ",
+            "meZ",
+            "swt",
+            "SWT",
+            "SWt",
+            "wat",
+            "WAT",
+            "wAT",
+            "west",
+            "WEST",
+            "WEsT",
+            "cest",
+            "CEST",
+            "CESt",
+            "eet",
+            "EET",
+            "eet",
+            "fst",
+            "FST",
+            "FST",
+            "mest",
+            "MEST",
+            "mESt",
+            "mesz",
+            "MESZ",
+            "Mesz",
+            "sast",
+            "SAST",
+            "sasT",
+            "sst",
+            "SST",
+            "sSt",
+            "bt",
+            "BT",
+            "BT",
+            "eat",
+            "EAT",
+            "EAt",
+            "eest",
+            "EEST",
+            "EEst",
+            "msk",
+            "MSK",
+            "MSk",
+            "msd",
+            "MSD",
+            "MSD",
+            "ist",
+            "IST",
+            "Ist",
+            "zp6",
+            "ZP6",
+            "Zp6",
+            "wast",
+            "WAST",
+            "wASt",
+            "cct",
+            "CCT",
+            "cct",
+            "sgt",
+            "SGT",
+            "sgt",
+            "wadt",
+            "WADT",
+            "WaDT",
+            "jst",
+            "JST",
+            "Jst",
+            "kst",
+            "KST",
+            "KST",
+            "east",
+            "EAST",
+            "eAst",
+            "gst",
+            "GST",
+            "Gst",
+            "eadt",
+            "EADT",
+            "EAdT",
+            "idle",
+            "IDLE",
+            "idLe",
+            "nzst",
+            "NZST",
+            "nZst",
+            "nzt",
+            "NZT",
+            "nZT",
+            "nzdt",
+            "NZDT",
+            "nZDt",
+    })
+    public void testUpperLowerRubyZoneNames(final String name) throws IOException {
+        final DateTimeZone jodaExpected = LEGACY.readValue("\"" + name + "\"", DateTimeZone.class);
+        final ZoneId legacy = LEGACY.readValue("\"" + name + "\"", ZoneId.class);
+        assertZoneId(jodaExpected, legacy);
+    }
+
     @Test
     public void testSuggestions() {
         assertEquals(Optional.of("CET is deprecated as a short time zone name. Use +01:00, +02:00, Europe/Paris, "
@@ -533,6 +807,23 @@ public class TestLegacyZones {
         assertEquals(jodaId.toString(), javaId.get().toString());
     }
 
+    private static void assertZoneId(final DateTimeZone jodaId, final ZoneId javaId) {
+        if (jodaId == null && javaId == null) {
+            return;
+        }
+        if (jodaId == null || javaId == null) {
+            assertEquals(jodaId, javaId);
+        }
+        if (isUtc(jodaId) && javaId.equals(ZoneOffset.UTC)) {
+            return;
+        }
+        if (jodaId.equals(DateTimeZone.forID("HST")) && javaId.equals(ZoneOffset.of("-10:00"))) {
+            // Joda:HST == JSR310:-10:00 is accepted as a special case.
+            return;
+        }
+        assertEquals(jodaId.toString(), javaId.toString());
+    }
+
     private static boolean isUtc(final DateTimeZone jodaId) {
         if (jodaId.equals(DateTimeZone.UTC)
                 || jodaId.equals(DateTimeZone.forID("Etc/GMT"))
@@ -541,5 +832,18 @@ public class TestLegacyZones {
             return true;
         }
         return false;
+    }
+
+    private static final ObjectMapper LEGACY;
+
+    private static final ObjectMapper STRICT;
+
+    static {
+        LEGACY = new ObjectMapper();
+        LEGACY.registerModule(ZoneIdModule.withLegacyNames());
+        LEGACY.registerModule(new DateTimeZoneJacksonModule());
+
+        STRICT = new ObjectMapper();
+        STRICT.registerModule(new ZoneIdModule());
     }
 }
