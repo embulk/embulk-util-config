@@ -44,12 +44,16 @@ public class TestLegacyZones {
             "ut,   0*3600",
             "gmt,  0*3600",
             "est, -5*3600",
+            "EDT, -5*3600",
             "edt, -4*3600",
             "cst, -6*3600",
+            "CDT, -6*3600",
             "cdt, -5*3600",
             "mst, -7*3600",
+            "MDT, -7*3600",
             "mdt, -6*3600",
             "pst, -8*3600",
+            "PDT, -8*3600",
             "pdt, -7*3600",
 
             "wet,  0*3600",
@@ -116,7 +120,7 @@ public class TestLegacyZones {
     })
     public void testShortNamesFromRuby(final String name, final String expectedOffsetInString) {
         final Optional<ZoneId> javaId = LegacyZones.getAlternative(name);
-        final DateTimeZone jodaId = JodaDateTimeZones.parseJodaDateTimeZone(name.toUpperCase(Locale.ROOT));
+        final DateTimeZone jodaId = JodaDateTimeZones.parseJodaDateTimeZone(name);
         assertTrue(javaId.isPresent());
         assertZoneId(jodaId, javaId);
     }
