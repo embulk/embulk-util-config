@@ -23,13 +23,15 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import org.joda.time.DateTimeZone;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 public class TestZoneIdModule {
     @ParameterizedTest
     @CsvSource({
-            "UTC,UTC",
+            "Z,UTC",
             "Etc/UTC,Etc/UTC",
             "+00:00,+00:00",
             "-00:00,-00:00",
@@ -54,14 +56,43 @@ public class TestZoneIdModule {
             "Z,GMT",
             "+06:00,F",
             "+09:00,JST",
+            "WET,WET",
+            "+00:00,Wet",
+            "+00:00,wet",
             "CET,CET",
+            "+01:00,Cet",
+            "+01:00,cet",
+            "MET,MET",
+            "+01:00,Met",
+            "+01:00,met",
+            "EET,EET",
+            "+02:00,Eet",
+            "+02:00,eet",
             "+02:00,CEST",
             "-08:00,PST",
             "-08:00,Pst",
             "-08:00,pst",
             "-08:00,PDT",
-            "-08:00,Pdt",
-            "-08:00,pdt",
+            "-07:00,Pdt",
+            "-07:00,pdt",
+            "-07:00,MST",
+            "-07:00,Mst",
+            "-07:00,mst",
+            "-07:00,MDT",
+            "-06:00,Mdt",
+            "-06:00,mdt",
+            "-06:00,CST",
+            "-06:00,Cst",
+            "-06:00,cst",
+            "-06:00,CDT",
+            "-05:00,Cdt",
+            "-05:00,cdt",
+            "-05:00,EST",
+            "-05:00,Est",
+            "-05:00,est",
+            "-05:00,EDT",
+            "-04:00,Edt",
+            "-04:00,edt",
             "+03:30,iran",
             "Asia/Tehran,Iran",
             "+03:30,IRAN",
@@ -79,6 +110,10 @@ public class TestZoneIdModule {
     public void testLegacy(final String expected, final String value) throws IOException {
         assertEquals(ZoneId.of(expected), LEGACY.readValue("\"" + value + "\"", ZoneId.class));
         assertThrows(JsonMappingException.class, () -> STRICT.readValue("\"" + value + "\"", ZoneId.class));
+
+        final DateTimeZone jodaExpected = LEGACY.readValue("\"" + value + "\"", DateTimeZone.class);
+        final ZoneId legacy = LEGACY.readValue("\"" + value + "\"", ZoneId.class);
+        assertZoneId(jodaExpected, legacy);
     }
 
     @ParameterizedTest
@@ -96,6 +131,33 @@ public class TestZoneIdModule {
         assertThrows(JsonMappingException.class, () -> STRICT.readValue("\"" + value + "\"", ZoneId.class));
     }
 
+    private static void assertZoneId(final DateTimeZone jodaId, final ZoneId javaId) {
+        if (jodaId == null && javaId == null) {
+            return;
+        }
+        if (jodaId == null || javaId == null) {
+            assertEquals(jodaId, javaId);
+        }
+        if (isUtc(jodaId) && javaId.equals(ZoneOffset.UTC)) {
+            return;
+        }
+        if (jodaId.equals(DateTimeZone.forID("HST")) && javaId.equals(ZoneOffset.of("-10:00"))) {
+            // Joda:HST == JSR310:-10:00 is accepted as a special case.
+            return;
+        }
+        assertEquals(jodaId.toString(), javaId.toString());
+    }
+
+    private static boolean isUtc(final DateTimeZone jodaId) {
+        if (jodaId.equals(DateTimeZone.UTC)
+                || jodaId.equals(DateTimeZone.forID("Etc/GMT"))
+                || jodaId.equals(DateTimeZone.forID("Etc/UCT"))
+                || jodaId.equals(DateTimeZone.forID("Etc/UTC"))) {
+            return true;
+        }
+        return false;
+    }
+
     private static final ObjectMapper LEGACY;
 
     private static final ObjectMapper STRICT;
@@ -103,6 +165,7 @@ public class TestZoneIdModule {
     static {
         LEGACY = new ObjectMapper();
         LEGACY.registerModule(ZoneIdModule.withLegacyNames());
+        LEGACY.registerModule(new DateTimeZoneJacksonModule());
 
         STRICT = new ObjectMapper();
         STRICT.registerModule(new ZoneIdModule());

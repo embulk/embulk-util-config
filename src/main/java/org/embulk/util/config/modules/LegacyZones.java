@@ -31,14 +31,22 @@ final class LegacyZones {
         if (SUGGESTIONS_CASE_SENSITIVE.containsKey(shortName)) {
             return Optional.of(SUGGESTIONS_CASE_SENSITIVE.get(shortName));
         }
-        return Optional.ofNullable(SUGGESTIONS_CASE_INSENSITIVE.get(shortName.toUpperCase(Locale.ROOT)));
+        final String shortNameUpperCase = shortName.toUpperCase(Locale.ROOT);
+        if ("UTC".equals(shortNameUpperCase)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(SUGGESTIONS_CASE_INSENSITIVE.get(shortNameUpperCase));
     }
 
     static Optional<ZoneId> getAlternative(final String shortName) {
         if (ALTERNATIVES_CASE_SENSITIVE.containsKey(shortName)) {
             return Optional.of(ALTERNATIVES_CASE_SENSITIVE.get(shortName));
         }
-        return Optional.ofNullable(ALTERNATIVES_CASE_INSENSITIVE.get(shortName.toUpperCase(Locale.ROOT)));
+        final String shortNameUpperCase = shortName.toUpperCase(Locale.ROOT);
+        if ("UTC".equals(shortNameUpperCase)) {
+            return Optional.of(ZoneOffset.UTC);
+        }
+        return Optional.ofNullable(ALTERNATIVES_CASE_INSENSITIVE.get(shortNameUpperCase));
     }
 
     private static final Map<String, ZoneId> ALTERNATIVES_CASE_SENSITIVE;
@@ -49,7 +57,191 @@ final class LegacyZones {
 
     private static final Map<String, String> SUGGESTIONS_CASE_INSENSITIVE;
 
-    private static final Object[] SHORT_ZONE_NAMES = {
+    private static final Object[] CASE_SENSITIVE_SHORT_ZONE_NAMES = {
+        // All capital "CDT" considered as Central Standard Time (-06:00) in legacy Embulk.
+        //
+        // "CDT" is widely acknowledged as Central Daylight Time (-05:00).
+        //
+        // Java and Ruby have recognized "CDT" as Central Daylight Time (-05:00) normally.
+        //
+        // Embulk has recognized "CDT" wrongly as Central Standard Time (-06:00) because Embulk has calculated its offset by:
+        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("CDT")
+        //
+        // If it contains a non-uppercase character, it is considered as -05:00.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L16
+        // * Java: N/A
+        // * Joda-Time DateTimeUtils: https://github.com/JodaOrg/joda-time/blob/v2.10.6/src/main/java/org/joda/time/DateTimeUtils.java#L445
+        //
+        // Central Standard Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Central_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/cst
+        //
+        // Central Daylight Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Central_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/cdt
+        "CDT", ZoneOffset.of("-06:00"),
+        "Use -05:00, -06:00, America/Chicago, America/Mexico_City, or else as needed instead for true Central Daylight Time. "
+            + "Embulk has recognized CDT wrongly as Central Standard Time, and keeps it for compatibility in the legacy mode.",
+
+        // All capital "CET" considered as "CET" (Central European Time) in legacy Embulk.
+        //
+        // It is literally ZoneId.of("CET"), which is different from ZoneOffset.of("+01:00").
+        //
+        // If it contains a non-uppercase character, it is considered as +01:00.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L71
+        // * Java: N/A
+        // * Joda-Time: N/A
+        //
+        // Central European Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Central_European_Time
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/cet
+        "CET", ZoneId.of("CET"),  // "CET" is accepted as ZoneId as-is.
+        "Use +01:00, +02:00, Europe/Paris, Europe/Berlin, Africa/Algiers, or else as needed instead for Central European Time.",
+
+        // All capital "EDT" considered as Eastern Standard Time (-05:00) in legacy Embulk.
+        //
+        // "EDT" is widely acknowledged as Eastern Daylight Time (-04:00).
+        //
+        // Java and Ruby have recognized "EDT" as Eastern Daylight Time (-04:00) normally.
+        //
+        // Embulk has recognized "EDT" wrongly as Eastern Standard Time (-05:00) because Embulk has calculated its offset by:
+        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("EDT")
+        //
+        // If it contains a non-uppercase character, it is considered as -04:00.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L14
+        // * Java: N/A
+        // * Joda-Time DateTimeUtils: https://github.com/JodaOrg/joda-time/blob/v2.10.6/src/main/java/org/joda/time/DateTimeUtils.java#L443
+        //
+        // Eastern Standard Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Eastern_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/est
+        //
+        // Eastern Daylight Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Eastern_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/edt
+        "EDT", ZoneOffset.of("-05:00"),
+        "Use -05:00, -04:00, America/New_York, America/Toronto, or else as needed instead for true Eastern Daylight Time. "
+            + "Embulk has recognized EDT wrongly as Eastern Standard Time, and keeps it for compatibility in the legacy mode.",
+
+        // All capital "EET" considered as "EET" (Eastern European Time) in legacy Embulk.
+        //
+        // It is literally ZoneId.of("EET"), which is different from ZoneOffset.of("+02:00").
+        //
+        // If it contains a non-uppercase character, it is considered as +02:00.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L80
+        // * Java: N/A
+        // * Joda-Time DateTimeZone: https://github.com/JodaOrg/joda-time/blob/v2.10.6/src/main/java/org/joda/time/DateTimeZone.java#L1311
+        //
+        // Eastern European Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Eastern_European_Time
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/eet
+        "EET", ZoneId.of("EET"),  // "EET" is accepted as ZoneId as-is.
+        "Use +02:00, +03:00, Europe/Bucharest, Europe/Athens, Africa/Cairo, or else as needed instead for Eastern European Time.",
+
+        // All capital "MDT" considered as Mountain Standard Time (-07:00) in legacy Embulk.
+        //
+        // "MDT" is widely acknowledged as Mountain Daylight Time (-06:00).
+        //
+        // Java and Ruby have recognized "MDT" as Mountain Daylight Time (-06:00) normally.
+        //
+        // Embulk has recognized "MDT" wrongly as Mountain Standard Time (-07:00) because Embulk has calculated its offset by:
+        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("MDT")
+        //
+        // If it contains a non-uppercase character, it is considered as -06:00.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L18
+        // * Java: N/A
+        // * Joda-Time DateTimeUtils: https://github.com/JodaOrg/joda-time/blob/v2.10.6/src/main/java/org/joda/time/DateTimeUtils.java#L447
+        //
+        // Standard Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Mountain_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/mst
+        //
+        // Daylight Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Mountain_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/mdt
+        "MDT", ZoneOffset.of("-07:00"),
+        "Use -07:00, -06:00, America/Denver, America/Edmonton, or else as needed instead for true Mountain Daylight Time. "
+            + "Embulk has recognized MDT wrongly as Mountain Standard Time, and keeps it for compatibility in the legacy mode.",
+
+        // All capital "MET" considered as "MET" (Middle European Time) in legacy Embulk.
+        //
+        // It is literally ZoneId.of("MET"), which is different from ZoneOffset.of("+01:00").
+        //
+        // If it contains a non-uppercase character, it is considered as +01:00.
+        //
+        // Middle European Time is usually acknowledged as Central European Time (CET).
+        //
+        // Java recognized "MET" as Middle East Time (+03:30) for historical reasons as of 1.1.6 at least.
+        // Embulk has not adopted it.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L73
+        // * Java 1.1.6: http://web.mit.edu/java_v1.1.6/distrib/sun4x_57/src/java/util/TimeZone.java
+        // * Joda-Time DateTimeZone: https://github.com/JodaOrg/joda-time/blob/v2.10.6/src/main/java/org/joda/time/DateTimeZone.java#L1309
+        //
+        // Central European Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Central_European_Time
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/cet
+        "MET", ZoneId.of("MET"),  // "MET" is accepted as ZoneId as-is.
+        "Use +01:00, +02:00, Europe/Paris, Europe/Berlin, Africa/Algiers, or else as needed instead for Middle (Central) European Time. "
+            + "Or, use +03:30, Asia/Tehran, or else as needed instead for Middle East Time, historical Java standard.",
+
+        // All capital "PDT" considered as Pacific Standard Time (-08:00) in legacy Embulk.
+        //
+        // "PDT" is widely acknowledged as Pacific Daylight Time (-07:00).
+        //
+        // Java and Ruby have recognized "PDT" as Pacific Daylight Time (-07:00) normally.
+        //
+        // Embulk has recognized "PDT" wrongly as Pacific Standard Time (-08:00) because Embulk has calculated its offset by:
+        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("PDT")
+        //
+        // If it contains a non-uppercase character, it is considered as -07:00.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L20
+        // * Java: N/A
+        // * Joda-Time DateTimeUtils: https://github.com/JodaOrg/joda-time/blob/v2.10.6/src/main/java/org/joda/time/DateTimeUtils.java#L449
+        //
+        // Pacific Standard Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Pacific_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/pst
+        //
+        // Pacific Daylight Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Pacific_Time_Zone
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/pdt
+        "PDT", ZoneOffset.of("-08:00"),
+        "Use -08:00, -07:00, America/Los_Angeles, America/Vancouver, or else as needed instead for true Pacific Daylight Time. "
+            + "Embulk has recognized PDT wrongly as Pacific Standard Time, and keeps it for compatibility in the legacy mode.",
+
+        // All capital "WET" considered as "WET" (Western European Time) in legacy Embulk.
+        //
+        // It is literally ZoneId.of("WET"), which is different from ZoneOffset.of("+00:00").
+        //
+        // If it contains a non-uppercase character, it is considered as +00:00.
+        //
+        // Abbreviations:
+        // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L47
+        // * Java: N/A
+        // * Joda-Time DateTimeZone: https://github.com/JodaOrg/joda-time/blob/v2.10.6/src/main/java/org/joda/time/DateTimeZone.java#L1307
+        //
+        // Western European Time:
+        // * Wikipedia: https://en.wikipedia.org/wiki/Western_European_Time
+        // * timeanddate.com: https://www.timeanddate.com/time/zones/wet
+        "WET", ZoneId.of("WET"),  // "WET" is accepted as ZoneId as-is.
+        "Use +00:00, +01:00, Europe/Lisbon, Africa/Casablanca, or else as needed instead for Western European Time.",
+    };
+
+    private static final Object[] CASE_INSENSITIVE_SHORT_ZONE_NAMES = {
         // "ADT" considered as Atlantic Daylight Time (-03:00) in legacy Embulk.
         //
         // "ADT" might sometimes mean Arabia Daylight Time (+04:00) historically in general.
@@ -280,14 +472,9 @@ final class LegacyZones {
         "Use +08:00, Asia/Shanghai, Asia/Taipei, or else as needed instead for China Coastal Time. "
             + "Or, use +06:30, Indian/Cocos, or else as needed instead for Cocos Islands Time.",
 
-        // "CDT" considered as Central Standard Time (-06:00) in legacy Embulk.
+        // "CDT", which contains a non-uppercase character, considered as Central Daylight Time (-05:00) in legacy Embulk.
         //
-        // "CDT" is widely acknowledged as Central Daylight Time (-05:00).
-        //
-        // Java and Ruby have recognized "CDT" as Central Daylight Time (-05:00) normally.
-        //
-        // Embulk has recognized "CDT" wrongly as Central Standard Time (-06:00) because Embulk has calculated its offset by:
-        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("CDT")
+        // If it consists of all uppercase characters, it is considered as -06:00.
         //
         // Abbreviations:
         // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L16
@@ -301,7 +488,7 @@ final class LegacyZones {
         // Central Daylight Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Central_Time_Zone
         // * timeanddate.com: https://www.timeanddate.com/time/zones/cdt
-        "CDT", ZoneOffset.of("-06:00"),
+        "CDT", ZoneOffset.of("-05:00"),
         "Use -05:00, -06:00, America/Chicago, America/Mexico_City, or else as needed instead for true Central Daylight Time. "
             + "Embulk has recognized CDT wrongly as Central Standard Time, and keeps it for compatibility in the legacy mode.",
 
@@ -318,7 +505,9 @@ final class LegacyZones {
         "CEST", ZoneOffset.of("+02:00"),
         "Use +02:00, Europe/Paris, Europe/Berlin, or else as needed instead for Central European Summer Time.",
 
-        // "CET" considered as Central European Time (+01:00) in legacy Embulk.
+        // "CET", which contains a non-uppercase character, considered as Central European Time (+01:00) in legacy Embulk.
+        //
+        // If it consists of all uppercase characters, it is considered as ZoneId.of("CET").
         //
         // Abbreviations:
         // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L71
@@ -328,7 +517,7 @@ final class LegacyZones {
         // Central European Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Central_European_Time
         // * timeanddate.com: https://www.timeanddate.com/time/zones/cet
-        "CET", ZoneId.of("CET"),  // "CET" is accepted as ZoneId as-is.
+        "CET", ZoneOffset.of("+01:00"),
         "Use +01:00, +02:00, Europe/Paris, Europe/Berlin, Africa/Algiers, or else as needed instead for Central European Time.",
 
         // "CLST" considered as Chile Summer Time (-03:00) in legacy Embulk.
@@ -429,14 +618,9 @@ final class LegacyZones {
         "EAT", ZoneOffset.of("+03:00"),
         "Use +03:00, Africa/Addis_Ababa, Asia/Riyadh, or else as needed instead for Eastern Africa Time.",
 
-        // "EDT" considered as Eastern Standard Time (-05:00) in legacy Embulk.
+        // "EDT", which contains a non-uppercase character, considered as Eastern Daylight Time (-04:00) in legacy Embulk.
         //
-        // "EDT" is widely acknowledged as Eastern Daylight Time (-04:00).
-        //
-        // Java and Ruby have recognized "EDT" as Eastern Daylight Time (-04:00) normally.
-        //
-        // Embulk has recognized "EDT" wrongly as Eastern Standard Time (-05:00) because Embulk has calculated its offset by:
-        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("EDT")
+        // If it consists of all uppercase characters, it is considered as -05:00.
         //
         // Abbreviations:
         // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L14
@@ -450,7 +634,7 @@ final class LegacyZones {
         // Eastern Daylight Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Eastern_Time_Zone
         // * timeanddate.com: https://www.timeanddate.com/time/zones/edt
-        "EDT", ZoneOffset.of("-05:00"),
+        "EDT", ZoneOffset.of("-04:00"),
         "Use -05:00, -04:00, America/New_York, America/Toronto, or else as needed instead for true Eastern Daylight Time. "
             + "Embulk has recognized EDT wrongly as Eastern Standard Time, and keeps it for compatibility in the legacy mode.",
 
@@ -467,7 +651,9 @@ final class LegacyZones {
         "EEST", ZoneOffset.of("+03:00"),
         "Use +03:00, Europe/Bucharest, Europe/Athens, or else as needed instead for Eastern European Summer Time.",
 
-        // "EET" considered as Eastern European Time ("EET"; +02:00) in legacy Embulk.
+        // "EET", which contains a non-uppercase character, considered as Eastern European Time (+02:00) in legacy Embulk.
+        //
+        // If it consists of all uppercase characters, it is considered as ZoneId.of("EET").
         //
         // Abbreviations:
         // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L80
@@ -477,7 +663,7 @@ final class LegacyZones {
         // Eastern European Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Eastern_European_Time
         // * timeanddate.com: https://www.timeanddate.com/time/zones/eet
-        "EET", ZoneId.of("EET"),  // "EET" is accepted as ZoneId as-is.
+        "EET", ZoneOffset.of("+02:00"),
         "Use +02:00, +03:00, Europe/Bucharest, Europe/Athens, Africa/Cairo, or else as needed instead for Eastern European Time.",
 
         // "EST" considered as Eastern Standard Time (-05:00) in legacy Embulk.
@@ -704,14 +890,9 @@ final class LegacyZones {
         "KST", ZoneOffset.of("+09:00"),
         "Use +09:00, Asia/Seoul, or else as needed instead for Korea Standard Time.",
 
-        // "MDT" considered as Mountain Standard Time (-07:00) in legacy Embulk.
+        // "MDT", which contains a non-uppercase character, considered as Mountain Daylight Time (-06:00) in legacy Embulk.
         //
-        // "MDT" is widely acknowledged as Mountain Daylight Time (-06:00).
-        //
-        // Java and Ruby have recognized "MDT" as Mountain Daylight Time (-06:00) normally.
-        //
-        // Embulk has recognized "MDT" wrongly as Mountain Standard Time (-07:00) because Embulk has calculated its offset by:
-        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("MDT")
+        // If it consists of all uppercase characters, it is considered as -07:00.
         //
         // Abbreviations:
         // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L18
@@ -725,7 +906,7 @@ final class LegacyZones {
         // Daylight Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Mountain_Time_Zone
         // * timeanddate.com: https://www.timeanddate.com/time/zones/mdt
-        "MDT", ZoneOffset.of("-07:00"),
+        "MDT", ZoneOffset.of("-06:00"),
         "Use -07:00, -06:00, America/Denver, America/Edmonton, or else as needed instead for true Mountain Daylight Time. "
             + "Embulk has recognized MDT wrongly as Mountain Standard Time, and keeps it for compatibility in the legacy mode.",
 
@@ -759,9 +940,9 @@ final class LegacyZones {
         "MESZ", ZoneOffset.of("+02:00"),
         "Use +02:00, Europe/Berlin, or else as needed instead for Mitteleuropaeische Sommerzeit.",
 
-        // "MET" considered as Middle European Time ("MET"; +01:00) in legacy Embulk.
+        // "MET", which contains a non-uppercase character, considered as Middle European Time (+01:00) in legacy Embulk.
         //
-        // Middle European Time is usually acknowledged as Central European Time (CET).
+        // If it consists of all uppercase characters, it is considered as ZoneId.of("MET").
         //
         // Java recognized "MET" as Middle East Time (+03:30) for historical reasons as of 1.1.6 at least.
         // Embulk has not adopted it.
@@ -774,7 +955,7 @@ final class LegacyZones {
         // Central European Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Central_European_Time
         // * timeanddate.com: https://www.timeanddate.com/time/zones/cet
-        "MET", ZoneId.of("MET"),  // "MET" is accepted as ZoneId as-is.
+        "MET", ZoneOffset.of("+01:00"),
         "Use +01:00, +02:00, Europe/Paris, Europe/Berlin, Africa/Algiers, or else as needed instead for Middle (Central) European Time. "
             + "Or, use +03:30, Asia/Tehran, or else as needed instead for Middle East Time, historical Java standard.",
 
@@ -939,14 +1120,9 @@ final class LegacyZones {
         "NZT", ZoneOffset.of("+12:00"),
         "Use +12:00, +13:00, Pacific/Auckland, or else as needed instead for New Zealand Time.",
 
-        // "PDT" considered as Pacific Standard Time (-08:00) in legacy Embulk.
+        // "PDT", which contains a non-uppercase character, considered as Pacific Daylight Time (-07:00) in legacy Embulk.
         //
-        // "PDT" is widely acknowledged as Pacific Daylight Time (-07:00).
-        //
-        // Java and Ruby have recognized "PDT" as Pacific Daylight Time (-07:00) normally.
-        //
-        // Embulk has recognized "PDT" wrongly as Pacific Standard Time (-08:00) because Embulk has calculated its offset by:
-        //   org.joda.time.format.DateTimeFormat.forPattern("z").parseMillis("PDT")
+        // If it consists of all uppercase characters, it is considered as -08:00.
         //
         // Abbreviations:
         // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L20
@@ -960,7 +1136,7 @@ final class LegacyZones {
         // Pacific Daylight Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Pacific_Time_Zone
         // * timeanddate.com: https://www.timeanddate.com/time/zones/pdt
-        "PDT", ZoneOffset.of("-08:00"),
+        "PDT", ZoneOffset.of("-07:00"),
         "Use -08:00, -07:00, America/Los_Angeles, America/Vancouver, or else as needed instead for true Pacific Daylight Time. "
             + "Embulk has recognized PDT wrongly as Pacific Standard Time, and keeps it for compatibility in the legacy mode.",
 
@@ -1145,7 +1321,9 @@ final class LegacyZones {
         "WEST", ZoneOffset.of("+01:00"),
         "Use +01:00, Europe/Lisbon, Africa/Casablanca, or else as needed instead for Western European Summer Time.",
 
-        // "WET" considered as Western European Time ("WET") in legacy Embulk.
+        // "WET", which contains a non-uppercase character, considered as Western European Time (+00:00) in legacy Embulk.
+        //
+        // If it consists of all uppercase characters, it is considered as ZoneId.of("WET").
         //
         // Abbreviations:
         // * Ruby: https://github.com/ruby/ruby/blob/v2_7_1/ext/date/zonetab.list#L47
@@ -1155,7 +1333,7 @@ final class LegacyZones {
         // Western European Time:
         // * Wikipedia: https://en.wikipedia.org/wiki/Western_European_Time
         // * timeanddate.com: https://www.timeanddate.com/time/zones/wet
-        "WET", ZoneId.of("WET"),  // "WET" is accepted as ZoneId as-is.
+        "WET", ZoneOffset.of("+00:00"),
         "Use +00:00, +01:00, Europe/Lisbon, Africa/Casablanca, or else as needed instead for Western European Time.",
 
         // "YDT" considered as obsolete Yukon Daylight Time (-08:00) in legacy Embulk.
@@ -1369,14 +1547,30 @@ final class LegacyZones {
     };
 
     static {
+        final HashMap<String, ZoneId> alternativesCaseSensitive = new HashMap<>();
+        final HashMap<String, String> suggestionsCaseSensitive = new HashMap<>();
+
         final HashMap<String, ZoneId> alternativesCaseInsensitive = new HashMap<>();
         final HashMap<String, String> suggestionsCaseInsensitive = new HashMap<>();
 
-        for (int i = 0; i < SHORT_ZONE_NAMES.length; i += 3) {
-            alternativesCaseInsensitive.put((String) SHORT_ZONE_NAMES[i], (ZoneId) SHORT_ZONE_NAMES[i + 1]);
+        for (int i = 0; i < CASE_SENSITIVE_SHORT_ZONE_NAMES.length; i += 3) {
+            alternativesCaseSensitive.put(
+                    (String) CASE_SENSITIVE_SHORT_ZONE_NAMES[i],
+                    (ZoneId) CASE_SENSITIVE_SHORT_ZONE_NAMES[i + 1]);
+            suggestionsCaseSensitive.put(
+                    (String) CASE_SENSITIVE_SHORT_ZONE_NAMES[i],
+                    (String) CASE_SENSITIVE_SHORT_ZONE_NAMES[i] + " is deprecated as a short time zone name. "
+                    + (String) CASE_SENSITIVE_SHORT_ZONE_NAMES[i + 2]);
+        }
+
+        for (int i = 0; i < CASE_INSENSITIVE_SHORT_ZONE_NAMES.length; i += 3) {
+            alternativesCaseInsensitive.put(
+                    (String) CASE_INSENSITIVE_SHORT_ZONE_NAMES[i],
+                    (ZoneId) CASE_INSENSITIVE_SHORT_ZONE_NAMES[i + 1]);
             suggestionsCaseInsensitive.put(
-                    (String) SHORT_ZONE_NAMES[i],
-                    (String) SHORT_ZONE_NAMES[i] + " is deprecated as a short time zone name. " + (String) SHORT_ZONE_NAMES[i + 2]);
+                    (String) CASE_INSENSITIVE_SHORT_ZONE_NAMES[i],
+                    (String) CASE_INSENSITIVE_SHORT_ZONE_NAMES[i] + " is deprecated as a short time zone name. "
+                    + (String) CASE_INSENSITIVE_SHORT_ZONE_NAMES[i + 2]);
         }
 
         for (int i = 0; i < MILITARY_ZONE_NAMES.length; i += 2) {
@@ -1407,9 +1601,6 @@ final class LegacyZones {
                         region, region + " is deprecated as a time zone name. Use " + zoneToString(offset) + " instead.");
             }
         }
-
-        final HashMap<String, ZoneId> alternativesCaseSensitive = new HashMap<>();
-        final HashMap<String, String> suggestionsCaseSensitive = new HashMap<>();
 
         for (int i = 0; i < NON_SLASH_BACKWARD_REGION_NAMES.length; i += 2) {
             final String region = ((String) NON_SLASH_BACKWARD_REGION_NAMES[i]);
