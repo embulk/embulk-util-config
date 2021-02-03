@@ -133,7 +133,10 @@ final class Compat {
     private static ObjectNode callGetObjectNodeAndRebuildIfAvailable(final DataSource source, final ObjectMapper mapper) {
         final Class<? extends DataSource> coreDataSourceImplClass = source.getClass();
         if (!coreDataSourceImplClass.getCanonicalName().equals("org.embulk.config.DataSourceImpl")) {
-            throw new ClassCastException("DataSource specified is not org.embulk.config.DataSourceImpl.");
+            throw new ClassCastException(
+                    "DataSource specified is not org.embulk.config.DataSourceImpl. "
+                        + "The DataSource instance is unexpected to implement getObjectNode(). "
+                        + "DataSource class: " + source.getClass());
         }
         final Method getObjectNode = getGetObjectNodeMethod(coreDataSourceImplClass);
         if (getObjectNode == null) {
