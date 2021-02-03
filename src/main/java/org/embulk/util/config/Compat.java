@@ -78,11 +78,11 @@ final class Compat {
             final JsonNode jsonNode = SIMPLE_MAPPER.readTree(jsonString.get());
 
             if (jsonNode == null) {
-                throw new NullPointerException("DataSource#toJson() returned null.");
+                throw new NullPointerException("DataSource(Impl)#toJson() returned null.");
             }
             if (!jsonNode.isObject()) {
                 throw new ClassCastException(
-                        "DataSource#toJson() returned not a JSON object: " + jsonNode.getClass().getCanonicalName());
+                        "DataSource(Impl)#toJson() returned not a JSON object: " + jsonNode.getClass().getCanonicalName());
             }
             return (ObjectNode) jsonNode;
         }
@@ -95,7 +95,7 @@ final class Compat {
     }
 
     private static Optional<String> callToJsonIfAvailable(final DataSource source) {
-        final Method toJson = getToJsonMethod();
+        final Method toJson = getToJsonMethod(source);
         if (toJson == null) {
             return Optional.empty();
         }
@@ -111,19 +111,19 @@ final class Compat {
             if (targetException instanceof Error) {
                 throw (Error) targetException;
             }
-            throw new IllegalStateException("DataSource#toJson() threw unexpected Exception.", targetException);
+            throw new IllegalStateException("DataSource(Impl)#toJson() threw unexpected Exception.", targetException);
         } catch (final IllegalAccessException ex) {
-            logger.debug("DataSource#toJson is not accessible unexpectedly. DataSource: {}, toJson: {}, ",
+            logger.debug("DataSource(Impl)#toJson is not accessible unexpectedly. DataSource: {}, toJson: {}, ",
                          source.getClass(), toJson);
-            throw new IllegalStateException("DataSource#toJson() is not accessible.", ex);
+            throw new IllegalStateException("DataSource(Impl)#toJson() is not accessible.", ex);
         }
 
         if (jsonStringObject == null) {
-            throw new NullPointerException("org.embulk.config.DataSource#toJson() returned null.");
+            throw new NullPointerException("DataSource(Impl)#toJson() returned null.");
         }
         if (!(jsonStringObject instanceof String)) {
             throw new ClassCastException(
-                    "org.embulk.config.DataSource#toJson() returned not a String: "
+                    "DataSource(Impl)#toJson() returned not a String: "
                     + jsonStringObject.getClass().getCanonicalName());
         }
 
@@ -163,7 +163,7 @@ final class Compat {
         return ObjectNodeRebuilder.rebuild(coreObjectNode, mapper);
     }
 
-    private static Method getToJsonMethod() {
+    private static Method getToJsonMethod(final DataSource source) {
         try {
             // Getting the "toJson" method from embulk-api's public interface "org.embulk.config.DataSource", not from an implementation class,
             // for example "org.embulk.(util.)config.DataSourceImpl", so that invoking the method does not throw IllegalAccessException.
@@ -178,7 +178,27 @@ final class Compat {
             // A method instance retrieved from the public interface "org.embulk.config.DataSource" would solve the problem.
             return DataSource.class.getMethod("toJson");
         } catch (final NoSuchMethodException ex) {
-            // Expected: toJson is not defined in Embulk v0.10.2 or earlier.
+            // Expected: toJson is not defined in "org.embulk.config.DataSource" when a user is running
+            // Embulk v0.10.2 or earlier.
+            //
+            // Even in the case, the received DataSource instance can still be of embulk-util-config's
+            // "org.embulk.util.config.DataSourceImpl" from another plugin (ex. input <=> parser), or
+            // from itself. As "org.embulk.util.config.DataSourceImpl" does not have "getObjectNode",
+            // it must still be rebuilt with "toJson" retrieved in some way.
+            //
+            // Pass-through to the next trial to retrieve the "toJson" method, then.
+        }
+
+        final Class<? extends DataSource> dataSourceImplClass = source.getClass();
+        try {
+            // Getting the "toJson" method from the implementation class embulk-core's "org.embulk.config.DataSourceImpl",
+            // or embulk-util-config's "org.embulk.util.config.DataSourceImpl".
+            return dataSourceImplClass.getMethod("toJson");
+        } catch (final NoSuchMethodException ex) {
+            // Still expected: toJson is not defined in embulk-core's "org.embulk.config.DataSourceImpl"
+            // in Embulk v0.10.2 or earlier.
+            //
+            // Returning null in this case so that it fallbacks to call the "getObjectNode" method instead.
             return null;
         }
     }
