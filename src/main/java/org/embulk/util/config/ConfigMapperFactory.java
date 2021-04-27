@@ -27,7 +27,10 @@ import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
 import org.embulk.util.config.modules.CharsetModule;
+import org.embulk.util.config.modules.ColumnModule;
 import org.embulk.util.config.modules.LocalFileModule;
+import org.embulk.util.config.modules.SchemaModule;
+import org.embulk.util.config.modules.TypeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +62,10 @@ public final class ConfigMapperFactory {
         /**
          * Builds {@link ConfigMapperFactory} with Jackson {@link com.fasterxml.jackson.databind.Module}s.
          *
-         * <p>Three Modules, {@link org.embulk.util.config.modules.CharsetModule},
+         * <p>Six Modules, {@link org.embulk.util.config.modules.ColumnModule}, {@link org.embulk.util.config.modules.SchemaModule},
+         * {@link org.embulk.util.config.modules.TypeModule}, {@link org.embulk.util.config.modules.CharsetModule},
          * {@link org.embulk.util.config.modules.LocalFileModule}, and {@link com.fasterxml.jackson.datatype.jdk8.Jdk8Module}
-         * are added since {@code embulk-util-config} v0.2.0.
+         * are added since {@code embulk-util-config} v0.3.0.
          */
         public Builder addDefaultModules() {
             // embulk-core's ModelManager had DateTimeZoneModule here for Joda-Time's DateTimeZone.
@@ -78,6 +82,10 @@ public final class ConfigMapperFactory {
             //
             // TimestampModule is implemented as org.embulk.util.config.modules.TimestampModule, but
             // it is not added by default because org.embulk.spi.time.Timestamp is deprecated.
+
+            this.addModule(new ColumnModule());
+            this.addModule(new SchemaModule());
+            this.addModule(new TypeModule());
 
             this.addModule(new CharsetModule());
             this.addModule(new LocalFileModule());
