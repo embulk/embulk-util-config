@@ -16,9 +16,6 @@
 
 package org.embulk.util.config;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -81,16 +78,8 @@ public final class ConfigMapper {
         final T value;
         try {
             value = this.objectMapper.readValue(objectNode.traverse(), taskType);
-        } catch (final JsonMappingException ex) {
-            throw new ConfigException("Failed to map a JSON value into some object.", ex);
-        } catch (final JsonParseException ex) {
-            throw new ConfigException("Unexpected failure in parsing ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
-        } catch (final JsonProcessingException ex) {
-            throw new ConfigException("Unexpected failure in processing ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
-        } catch (final IOException ex) {
-            throw new ConfigException("Unexpected I/O error in ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
-        } catch (final RuntimeException ex) {
-            throw new ConfigException("Unexpected failure in ObjectNode rebuilt from org.embulk.config.ConfigSource.", ex);
+        } catch (final IOException | RuntimeException ex) {
+            throw new ConfigException(buildExceptionMessage(ex, taskType), ex);
         }
 
         if (this.validator != null) {
@@ -101,6 +90,21 @@ public final class ConfigMapper {
         }
 
         return value;
+    }
+
+    static String buildExceptionMessage(final Exception ex, final Class<?> taskType) {
+        final StringBuilder messageBuilder = new StringBuilder();
+        messageBuilder.append("Failed to map Embulk's ConfigSource to ");
+        messageBuilder.append(taskType.getName());
+
+        final String originalMessage = ex.getMessage();
+        if (originalMessage != null) {
+            messageBuilder.append(": ");
+            messageBuilder.append(originalMessage);
+        } else {
+            messageBuilder.append(".");
+        }
+        return messageBuilder.toString();
     }
 
     private final ObjectMapper objectMapper;
