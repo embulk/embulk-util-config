@@ -16,7 +16,6 @@
 
 package org.embulk.util.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
@@ -79,11 +78,7 @@ public final class ConfigMapper {
         final T value;
         try {
             value = this.objectMapper.readValue(objectNode.traverse(), taskType);
-        } catch (final JsonProcessingException ex) {
-            throw new ConfigException(buildExceptionMessage(ex, taskType), ex);
-        } catch (final IOException ex) {
-            throw new ConfigException(buildExceptionMessage(ex, taskType), ex);
-        } catch (final RuntimeException ex) {
+        } catch (final IOException | RuntimeException ex) {
             throw new ConfigException(buildExceptionMessage(ex, taskType), ex);
         }
 
@@ -97,7 +92,7 @@ public final class ConfigMapper {
         return value;
     }
 
-    private static String buildExceptionMessage(final Exception ex, final Class<?> taskType) {
+    static String buildExceptionMessage(final Exception ex, final Class<?> taskType) {
         final StringBuilder messageBuilder = new StringBuilder();
         messageBuilder.append("Failed to map Embulk's ConfigSource to ");
         messageBuilder.append(taskType.getName());
