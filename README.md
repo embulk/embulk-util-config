@@ -1,57 +1,30 @@
 embulk-util-config
 ===================
 
-How to release
----------------
+For Embulk plugin developers
+-----------------------------
 
-See also: https://central.sonatype.org/pages/gradle.html
+* [Javadoc](https://dev.embulk.org/embulk-util-config/)
 
-### Sonatype
-
-1. Create your account on Sonatype OSSRH.
-2. Set your account information in your `gradle.properties` (usually in `~/.gradle/gradle.properties`).
-    * ```
-      ossrhUsername=<your Sonatype OSSRH username>
-      ossrhPassword=<your Sonatype OSSRH password>
-      ```
-
-### OpenPGP
-
-1. Create your own OpenPGP key pair.
-2. Set your OpenPGP key information in your `gradle.properties`.
-    * ```
-      # For example: signing.keyId=1234ABCD
-      signing.keyId=<your OpenPGP key ID>
-      signing.password=<your OpenPGP key password>
-      # For example: signing.secretKeyRingFile=/home/you/.gnupg/1234567890ABCDEF1234567890ABCDEF12345678.secring.gpg
-      signing.secretKeyRingFile=<path to your OpenPGP secret key ring file>
-      ```
+For Maintainers
+----------------
 
 ### Release
 
-1. Create a detached `HEAD` from the `master` branch.
-    * ```
-      git checkout master
-      git checkout --detach
-      ```
-2. Remove `-SNAPSHOT` from the version number in `build.gradle`.
-3. Commit it and tag.
-    * ```
-      git add build.gradle
-      git commit -m "Release vX.Y.Z"
-      git tag vX.Y.Z
-      ```
-4. Release.
-    * ```
-      ./gradlew -Dorg.gradle.internal.publish.checksums.insecure=true publishMavenPublicationToMavenCentralRepository
-      ```
-    * `-Dorg.gradle.internal.publish.checksums.insecure=true` is required due to: https://issues.sonatype.org/browse/OSSRH-56097
-5. Push the tag.
-    * ```
-      git push -u origin vX.Y.Z
-      ```
-6. Back to `master`.
-    * ```
-      git checkout master
-      ```
-7. Continue to the next `-SNAPSHOT` version.
+Modify `version` in `build.gradle` at a detached commit to bump up the versions of Embulk standard plugins.
+
+```
+git checkout --detach master
+
+(Edit: Remove "-SNAPSHOT" in "version" in build.gradle.)
+
+git add build.gradle
+
+git commit -m "Release vX.Y.Z"
+
+git tag -a vX.Y.Z
+
+(Edit: Write a tag annotation in the changelog format.)
+
+git push -u origin vX.Y.Z  # Pushing a version tag would trigger a release operation on GitHub Actions after approval.
+```
