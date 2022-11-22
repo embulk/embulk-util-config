@@ -18,11 +18,14 @@ package org.embulk.util.config;
 
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.validation.Validator;
 import org.embulk.config.ConfigDiff;
+import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
 import org.embulk.config.TaskReport;
 import org.embulk.config.TaskSource;
@@ -219,6 +222,68 @@ public final class ConfigMapperFactory {
     public TaskSource newTaskSource() {
         final ObjectMapper objectMapper = this.mapperForTask();
         return (TaskSource) new DataSourceImpl(objectMapper.createObjectNode(), objectMapper);
+    }
+
+    /**
+     * Rebuilds {@link org.embulk.config.ConfigDiff} with the context of this {@code embulk-util-config}.
+     *
+     * <p>{@link org.embulk.config.ConfigDiff} passed from {@code embulk-core} is built with the context of
+     * {@code embulk-core}. It is usually fine, but sometimes, it could be problematic because the given
+     * {@link org.embulk.config.ConfigDiff} is built with Jackson on the {@code embulk-core} side.
+     *
+     * <p>For example, when converting a {@link org.embulk.config.ConfigDiff} instance to a Jackson object,
+     * such as {@link com.fasterxml.jackson.databind.JsonNode} like below, it fails.
+     *
+     * <pre>{@code  configDiff.get(JsonNode.class, "field");}</pre>
+     *
+     * <p>Rebuilding the given {@link org.embulk.config.ConfigDiff} instance would mitigate such a problem.
+     *
+     * @param configDiff  a {@link org.embulk.config.ConfigDiff} instance to rebuild
+     * @return the new {@link org.embulk.config.ConfigDiff} instance rebuilt
+     */
+    public ConfigDiff rebuildConfigDiff(final ConfigDiff configDiff) {
+        final ObjectNode objectNode;
+        try {
+            objectNode = Compat.rebuildObjectNode(configDiff);
+        } catch (final IOException ex) {
+            // It should happen only from DataSource#toJson(), not from rebuilding ObjectNode.
+            throw new ConfigException("org.embulk.config.ConfigDiff#toJson() returned an invalid JSON.", ex);
+        } catch (final RuntimeException ex) {
+            throw new ConfigException("Unexpected failure in reinterpreting ObjectNode from org.embulk.config.ConfigDiff.", ex);
+        }
+
+        return (ConfigDiff) new DataSourceImpl(objectNode, this.mapperForConfig());
+    }
+
+    /**
+     * Rebuilds {@link org.embulk.config.TaskReport} with the context of this {@code embulk-util-config}.
+     *
+     * <p>{@link org.embulk.config.TaskReport} passed from {@code embulk-core} is built with the context of
+     * {@code embulk-core}. It is usually fine, but sometimes, it could be problematic because the given
+     * {@link org.embulk.config.TaskReport} is built with Jackson on the {@code embulk-core} side.
+     *
+     * <p>For example, when converting a {@link org.embulk.config.TaskReport} instance to a Jackson object,
+     * such as {@link com.fasterxml.jackson.databind.JsonNode} like below, it fails.
+     *
+     * <pre>{@code  taskReport.get(JsonNode.class, "field");}</pre>
+     *
+     * <p>Rebuilding the given {@link org.embulk.config.TaskReport} instance would mitigate such a problem.
+     *
+     * @param taskReport  a {@link org.embulk.config.TaskReport} instance to rebuild
+     * @return the new {@link org.embulk.config.TaskReport} instance rebuilt
+     */
+    public TaskReport rebuildTaskReport(final TaskReport taskReport) {
+        final ObjectNode objectNode;
+        try {
+            objectNode = Compat.rebuildObjectNode(taskReport);
+        } catch (final IOException ex) {
+            // It should happen only from DataSource#toJson(), not from rebuilding ObjectNode.
+            throw new ConfigException("org.embulk.config.TaskReport#toJson() returned an invalid JSON.", ex);
+        } catch (final RuntimeException ex) {
+            throw new ConfigException("Unexpected failure in reinterpreting ObjectNode from org.embulk.config.TaskReport.", ex);
+        }
+
+        return (TaskReport) new DataSourceImpl(objectNode, this.mapperForConfig());
     }
 
     private ObjectMapper mapperForConfig() {
