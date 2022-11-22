@@ -133,7 +133,6 @@ publishing {
 
                 developers {
                     developer {
-                        id = "dmikurube"
                         name = "Dai MIKURUBE"
                         email = "dmikurube@treasure-data.com"
                     }
