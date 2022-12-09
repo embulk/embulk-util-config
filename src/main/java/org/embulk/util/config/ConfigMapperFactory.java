@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
 import javax.validation.Validator;
 import org.embulk.config.ConfigDiff;
 import org.embulk.config.ConfigException;
@@ -41,6 +43,13 @@ import org.slf4j.LoggerFactory;
  * Creates {@link ConfigMapper} and {@link TaskMapper} with required and specified Jackson {@link com.fasterxml.jackson.databind.Module}s and {@link javax.validation.Validator}.
  */
 public final class ConfigMapperFactory {
+
+    public static final String TASK_REPORT_FILES = "files";
+    public static final String TASK_REPORT_FILE_PATH = "file_path";
+    public static final String TASK_REPORT_SUCCESSES = "successes";
+    public static final String TASK_REPORT_WARNINGS = "warnings";
+    public static final String TASK_REPORT_WARNINGS_DETAIL = "warnings_detail";
+
     private ConfigMapperFactory(final List<Module> additionalModules, final Validator validator) {
         this.additionalModules = Collections.unmodifiableList(new ArrayList<>(additionalModules));
         this.validator = validator;
@@ -212,6 +221,47 @@ public final class ConfigMapperFactory {
     public TaskReport newTaskReport() {
         final ObjectMapper objectMapper = this.mapperForOthers();
         return (TaskReport) new DataSourceImpl(objectMapper.createObjectNode(), objectMapper);
+    }
+
+    /**
+     * Create TaskReport for one file processing in Parser Plugin
+     * @param filePath  path of file
+     * @param successes number of successes
+     * @param warnings number of warnings
+     * @param warningsDetail warnings detail map, key is warning message, value is list of line numbers
+     * @return TaskReport
+     */
+    public TaskReport newTaskReportPerFileParserPlugin(String filePath, long successes, long warnings, Map<String, List<Long>> warningsDetail) {
+        final TaskReport taskReport = newTaskReport();
+        taskReport.set(TASK_REPORT_FILE_PATH, filePath);
+        taskReport.set(TASK_REPORT_SUCCESSES, successes);
+        taskReport.set(TASK_REPORT_WARNINGS, warnings);
+        taskReport.set(TASK_REPORT_WARNINGS_DETAIL, warningsDetail);
+        return taskReport;
+    }
+
+    /**
+     * Create TaskReport for ParserPlugin
+     * @param fileTaskReports each TaskReport is for one file report
+     * @return TaskReport
+     */
+    public TaskReport newTaskReportParserPlugin(List<TaskReport> fileTaskReports)  {
+        return newTaskReport().set(TASK_REPORT_FILES, fileTaskReports);
+    }
+
+    /**
+     * Create TaskReport for InputPlugin
+     * @param successes number of successes
+     * @param warnings number of warnings
+     * @param warningsDetail warnings detail
+     * @return TaskReport
+     */
+    public TaskReport newTaskReportInputPlugin(long successes, long warnings, Map<String, String> warningsDetail) {
+        final TaskReport taskReport = newTaskReport();
+        taskReport.set(TASK_REPORT_SUCCESSES, successes);
+        taskReport.set(TASK_REPORT_WARNINGS, warnings);
+        taskReport.set(TASK_REPORT_WARNINGS_DETAIL, warningsDetail);
+        return taskReport;
     }
 
     /**
