@@ -168,7 +168,7 @@ final class Compat {
 
     private static Method getToJsonMethod(final DataSource source) {
         try {
-            // Getting the "toJson" method from embulk-api's public interface "org.embulk.config.DataSource", not from an implementation class,
+            // Getting the "toJson" method from embulk-spi's public interface "org.embulk.config.DataSource", not from an implementation class,
             // for example "org.embulk.(util.)config.DataSourceImpl", so that invoking the method does not throw IllegalAccessException.
             //
             // If the method instance is retrieved from a non-public implementation class, invoking it can fail like:
@@ -209,7 +209,7 @@ final class Compat {
     private static Method getGetObjectNodeMethod(final Class<? extends DataSource> coreDataSourceImplClass) {
         try {
             // Unlike "toJson" above, "getObjectNode" needs to be invoked only for org.embulk.config.DataSourceImpl
-            // because "getObjectNode" is removed from embulk-api's official "org.embul.config.DataSource", and
+            // because "getObjectNode" is removed from embulk-spi's official "org.embulk.config.DataSource", and
             // implemented only in embulk-core's internal "org.embulk.config.DataSourceImpl".
             //
             // "org.embulk.config.DataSourceImpl" and its "getObjectNode" have been public.
