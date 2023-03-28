@@ -1,5 +1,6 @@
 plugins {
     id "java"
+    id "java-library"
     id "maven-publish"
     id "signing"
     id "checkstyle"
@@ -53,11 +54,12 @@ dependencies {
     compileOnly "org.embulk:embulk-spi:0.10.44"
     compileOnly "org.slf4j:slf4j-api:2.0.6"
 
-    implementation "javax.validation:validation-api:1.1.0.Final"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
-    implementation "com.fasterxml.jackson.core:jackson-core:2.6.7"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.6.7.5"
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"  // Required for java.util.Optional.
+    // Dependencies should be "api" so that their scope would be "compile" in "pom.xml".
+    api "javax.validation:validation-api:1.1.0.Final"
+    api "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
+    api "com.fasterxml.jackson.core:jackson-core:2.6.7"
+    api "com.fasterxml.jackson.core:jackson-databind:2.6.7.5"
+    api "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"  // Required for java.util.Optional.
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.2"
     testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.2"
