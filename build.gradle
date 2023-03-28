@@ -13,9 +13,6 @@ group = "org.embulk"
 version = "0.3.3-SNAPSHOT"
 description = "Embulk configuration processor for Embulk plugins"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 configurations {
     compileClasspath.resolutionStrategy.activateDependencyLocking()
     runtimeClasspath.resolutionStrategy.activateDependencyLocking()
@@ -31,6 +28,10 @@ tasks.withType(JavaCompile) {
 }
 
 java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+
     withJavadocJar()
     withSourcesJar()
 }
@@ -49,27 +50,30 @@ sourceSets {
 }
 
 dependencies {
-    compileOnly "org.embulk:embulk-api:0.10.31"
+    compileOnly "org.embulk:embulk-spi:0.10.44"
+
     implementation "javax.validation:validation-api:1.1.0.Final"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.6.7"
     implementation "com.fasterxml.jackson.core:jackson-core:2.6.7"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.6.7"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.6.7"  // Required for java.util.Optional.
 
-    testImplementation "org.embulk:embulk-api:0.10.31"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.2"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.9.2"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.9.2"
+
+    testImplementation "org.embulk:embulk-spi:0.10.44"
+
     testImplementation "org.apache.bval:bval-jsr303:0.5"
     testImplementation "joda-time:joda-time:2.9.2"
-    testImplementation "ch.qos.logback:logback-classic:1.1.3"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.1"
-    testImplementation "org.junit.jupiter:junit-jupiter-params:5.6.1"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.1"
+    testImplementation "ch.qos.logback:logback-classic:1.3.5"
 
-    legacyTestImplementation "junit:junit:4.12"
-    legacyTestImplementation "org.embulk:embulk-core:0.10.31"
-    legacyTestImplementation "org.embulk:embulk-core:0.10.31:tests"
-    legacyTestImplementation "org.embulk:embulk-junit4:0.10.31"
-    legacyTestImplementation "org.embulk:embulk-deps:0.10.31"
-    legacyTestImplementation "ch.qos.logback:logback-classic:1.1.3"
+    legacyTestImplementation "junit:junit:4.13.2"
+
+    legacyTestImplementation "org.embulk:embulk-core:0.10.44"
+    legacyTestImplementation "org.embulk:embulk-deps:0.10.44"
+    legacyTestImplementation "org.embulk:embulk-junit4:0.10.44"
+    legacyTestImplementation "ch.qos.logback:logback-classic:1.3.5"
 }
 
 javadoc {
@@ -87,7 +91,7 @@ javadoc {
         overview = "src/main/html/overview.html"
         links "https://docs.oracle.com/javase/8/docs/api/"
         links "https://docs.oracle.com/javaee/7/api/"
-        links "https://dev.embulk.org/embulk-api/0.10.31/javadoc/"
+        links "https://dev.embulk.org/embulk-spi/0.10.44/javadoc/"
         links "https://fasterxml.github.io/jackson-core/javadoc/2.6/"
         links "https://fasterxml.github.io/jackson-databind/javadoc/2.6/"
         links "https://fasterxml.github.io/jackson-datatype-jdk8/javadoc/2.6/"
@@ -97,21 +101,18 @@ javadoc {
 jar {
     metaInf {
         from rootProject.file("LICENSE")
-        from rootProject.file("NOTICE")
     }
 }
 
 sourcesJar {
     metaInf {
         from rootProject.file("LICENSE")
-        from rootProject.file("NOTICE")
     }
 }
 
 javadocJar {
     metaInf {
         from rootProject.file("LICENSE")
-        from rootProject.file("NOTICE")
     }
 }
 
@@ -143,6 +144,7 @@ publishing {
                         // http://central.sonatype.org/pages/requirements.html#license-information
                         name = "The Apache License, Version 2.0"
                         url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                        distribution = "repo"
                     }
                 }
 
