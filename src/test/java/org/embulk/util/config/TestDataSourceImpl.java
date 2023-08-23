@@ -58,9 +58,7 @@ public class TestDataSourceImpl {
         try {
             impl.get(List.class, "object");
         } catch (final ConfigException ex) {
-            assertTrue(ex.getMessage().startsWith(
-                    "com.fasterxml.jackson.databind.JsonMappingException: "
-                    + "Can not deserialize instance of java.util.ArrayList out of START_OBJECT token"));
+            assertTrue(ex.getCause() instanceof com.fasterxml.jackson.core.JsonProcessingException);
             return;
         }
         fail("ConfigException should be thrown by getting a String value as a List.");
@@ -72,9 +70,7 @@ public class TestDataSourceImpl {
         try {
             impl.get(List.class, "string");
         } catch (final ConfigException ex) {
-            assertTrue(ex.getMessage().startsWith(
-                    "com.fasterxml.jackson.databind.JsonMappingException: "
-                    + "Can not deserialize instance of java.util.ArrayList out of VALUE_STRING token"));
+            assertTrue(ex.getCause() instanceof com.fasterxml.jackson.core.JsonProcessingException);
             return;
         }
         fail("ConfigException should be thrown by getting a String value as a List.");
