@@ -6,6 +6,12 @@ plugins {
     id "checkstyle"
 }
 
+ext {
+    if (!project.hasProperty("jacksonVersionForJacksonTest")) {
+        jacksonVersionForJacksonTest = "2.6.7.5"
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -72,12 +78,24 @@ dependencies {
     testImplementation "joda-time:joda-time:2.9.2"
     testImplementation "ch.qos.logback:logback-classic:1.3.5"
 
+    testImplementation platform("com.fasterxml.jackson:jackson-bom:$jacksonVersionForJacksonTest")
+    testImplementation "com.fasterxml.jackson.core:jackson-annotations"
+    testImplementation "com.fasterxml.jackson.core:jackson-core"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind"
+    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8"  // Required for java.util.Optional.
+
     legacyTestImplementation "junit:junit:4.13.2"
 
     legacyTestImplementation "org.embulk:embulk-core:0.10.44"
     legacyTestImplementation "org.embulk:embulk-deps:0.10.44"
     legacyTestImplementation "org.embulk:embulk-junit4:0.10.44"
     legacyTestImplementation "ch.qos.logback:logback-classic:1.3.5"
+
+    legacyTestImplementation platform("com.fasterxml.jackson:jackson-bom:$jacksonVersionForJacksonTest")
+    legacyTestImplementation "com.fasterxml.jackson.core:jackson-annotations"
+    legacyTestImplementation "com.fasterxml.jackson.core:jackson-core"
+    legacyTestImplementation "com.fasterxml.jackson.core:jackson-databind"
+    legacyTestImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8"  // Required for java.util.Optional.
 }
 
 javadoc {
