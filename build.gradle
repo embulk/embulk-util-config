@@ -8,7 +8,7 @@ plugins {
 
 ext {
     if (!project.hasProperty("jacksonVersionForJacksonTest")) {
-        jacksonVersionForJacksonTest = "2.6.7"
+        jacksonVersionForJacksonTest = "2.6.7.5"
     }
 }
 
