@@ -137,6 +137,9 @@ public final class ConfigMapperFactory {
      * Creates a {@link Builder} to build {@link ConfigMapperFactory}.
      */
     public static Builder builder() {
+        assertJacksonCoreVersion();
+        assertJacksonDataBindVersion();
+        assertJacksonDataTypeJdk8Version();
         return new Builder();
     }
 
@@ -318,6 +321,39 @@ public final class ConfigMapperFactory {
         objectMapper.registerModule(new DataSourceModule(objectMapper));
 
         return objectMapper;
+    }
+
+    private static void assertJacksonCoreVersion() {
+        if (com.fasterxml.jackson.core.json.PackageVersion.VERSION.getMajorVersion() != 2) {
+            throw new UnsupportedOperationException("embulk-util-config is not used with Jackson 2.");
+        }
+
+        final int minor = com.fasterxml.jackson.core.json.PackageVersion.VERSION.getMinorVersion();
+        if (minor < 14 || (minor == 15 && com.fasterxml.jackson.core.json.PackageVersion.VERSION.getPatchLevel() <= 2)) {
+            throw new UnsupportedOperationException("embulk-util-config is not used with Jackson (jackson-core) 2.15.3 or later.");
+        }
+    }
+
+    private static void assertJacksonDataBindVersion() {
+        if (com.fasterxml.jackson.databind.cfg.PackageVersion.VERSION.getMajorVersion() != 2) {
+            throw new UnsupportedOperationException("embulk-util-config is not used with Jackson 2.");
+        }
+
+        final int minor = com.fasterxml.jackson.databind.cfg.PackageVersion.VERSION.getMinorVersion();
+        if (minor < 14 || (minor == 15 && com.fasterxml.jackson.databind.cfg.PackageVersion.VERSION.getPatchLevel() <= 2)) {
+            throw new UnsupportedOperationException("embulk-util-config is not used with Jackson (jackson-databind) 2.15.3 or later.");
+        }
+    }
+
+    private static void assertJacksonDataTypeJdk8Version() {
+        if (com.fasterxml.jackson.datatype.jdk8.PackageVersion.VERSION.getMajorVersion() != 2) {
+            throw new UnsupportedOperationException("embulk-util-config is not used with Jackson 2.");
+        }
+
+        final int minor = com.fasterxml.jackson.datatype.jdk8.PackageVersion.VERSION.getMinorVersion();
+        if (minor < 14 || (minor == 15 && com.fasterxml.jackson.datatype.jdk8.PackageVersion.VERSION.getPatchLevel() <= 2)) {
+            throw new UnsupportedOperationException("embulk-util-config is not used with Jackson (jackson-datatype-jdk8) 2.15.3 or later.");
+        }
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigMapperFactory.class);
