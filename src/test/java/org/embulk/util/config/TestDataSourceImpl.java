@@ -17,6 +17,7 @@
 package org.embulk.util.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -32,6 +33,17 @@ public class TestDataSourceImpl {
     @Test
     public void testGetList() {
         final DataSourceImpl impl = createTestNode();
+
+        assertTrue(impl.hasList("array"));
+        assertTrue(impl.hasList("arrayOfStrings"));
+        assertTrue(impl.hasList("arrayOfIntegers"));
+        assertFalse(impl.hasList("noexist"));
+        assertFalse(impl.hasList("object"));
+        assertFalse(impl.hasList("string"));
+        assertFalse(impl.hasList("boolean"));
+        assertFalse(impl.hasList("int"));
+        assertFalse(impl.hasList("double"));
+
         final List<?> list = impl.get(List.class, "array");
         assertEquals(4, list.size());
         assertTrue(list.get(0) instanceof String);
@@ -40,16 +52,60 @@ public class TestDataSourceImpl {
         assertEquals("fuga", list.get(1));
         assertTrue(list.get(2) instanceof Map);
         assertTrue(list.get(3) instanceof List);
+
+        final List<String> listOfStrings = impl.getListOf(String.class, "arrayOfStrings");
+        assertEquals("foo", listOfStrings.get(0));
+        assertEquals("bar", listOfStrings.get(1));
+        assertEquals("baz", listOfStrings.get(2));
+
+        final List<Long> listOfIntegers = impl.getListOf(Long.class, "arrayOfIntegers");
+        assertEquals(124L, listOfIntegers.get(0));
+        assertEquals(-4014L, listOfIntegers.get(1));
+        assertEquals(9241L, listOfIntegers.get(2));
     }
 
     @Test
     public void testGetObject() {
         final DataSourceImpl impl = createTestNode();
+
+        assertFalse(impl.hasNested("array"));
+        assertFalse(impl.hasNested("arrayOfStrings"));
+        assertFalse(impl.hasNested("arrayOfIntegers"));
+        assertFalse(impl.hasNested("noexist"));
+        assertTrue(impl.hasNested("object"));
+        assertFalse(impl.hasNested("string"));
+        assertFalse(impl.hasNested("boolean"));
+        assertFalse(impl.hasNested("int"));
+        assertFalse(impl.hasNested("double"));
+
         final DataSourceImpl object = impl.getNested("object");
         assertTrue(object.has("key1"));
         assertTrue(object.has("key2"));
         assertEquals("value1", object.get(String.class, "key1"));
         assertEquals("value2", object.get(String.class, "key2"));
+    }
+
+    @Test
+    public void testFailToGetListOfObject() {
+        final DataSourceImpl impl = createTestNode();
+        try {
+            impl.getListOf(String.class, "object");
+        } catch (final ConfigException ex) {
+            return;
+        }
+        fail("ConfigException should be thrown by getting a JSON object as a List.");
+    }
+
+    @Test
+    public void testFailToGetListOfDifferentTypes() {
+        final DataSourceImpl impl = createTestNode();
+        try {
+            impl.getListOf(String.class, "array");
+        } catch (final ConfigException ex) {
+            assertTrue(ex.getCause() instanceof com.fasterxml.jackson.core.JsonProcessingException);
+            return;
+        }
+        fail("ConfigException should be thrown by getting a mixed JSON array as a List of Strings.");
     }
 
     @Test
@@ -116,6 +172,19 @@ public class TestDataSourceImpl {
         arrayUnderList.add("somewhat");
         array.add(arrayUnderList);
         root.put("array", array);
+
+        final ArrayNode arrayOfStrings = SIMPLE_MAPPER.createArrayNode();
+        arrayOfStrings.add("foo");
+        arrayOfStrings.add("bar");
+        arrayOfStrings.add("baz");
+        root.put("arrayOfStrings", arrayOfStrings);
+
+        final ArrayNode arrayOfIntegers = SIMPLE_MAPPER.createArrayNode();
+        arrayOfIntegers.add(124);
+        arrayOfIntegers.add(-4014);
+        arrayOfIntegers.add(9241);
+        root.put("arrayOfIntegers", arrayOfIntegers);
+
         final ObjectNode object = SIMPLE_MAPPER.createObjectNode();
         object.put("key1", "value1");
         object.put("key2", "value2");
