@@ -26,7 +26,7 @@ import javax.validation.Validation;
 import javax.validation.constraints.Max;
 
 import org.apache.bval.jsr303.ApacheValidationProvider;
-import org.embulk.EmbulkTestRuntime;
+import org.embulk.test.EmbulkTestRuntime;
 import org.embulk.util.config.Config;
 import org.embulk.util.config.ConfigDefault;
 import org.embulk.util.config.ConfigMapper;
