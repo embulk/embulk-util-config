@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.embulk.config.ConfigDiff;
@@ -64,6 +65,22 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
     }
 
     @Override
+    public boolean hasList(final String attrName) {
+        if (!this.data.has(attrName)) {
+            return false;
+        }
+        return this.data.get(attrName).isArray();
+    }
+
+    @Override
+    public boolean hasNested(final String attrName) {
+        if (!this.data.has(attrName)) {
+            return false;
+        }
+        return this.data.get(attrName).isObject();
+    }
+
+    @Override
     public <E> E get(final Class<E> type, final String attrName) {
         final JsonNode json = this.data.get(attrName);
         if (json == null) {
@@ -87,6 +104,28 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
         } catch (final IOException ex) {
             throw new ConfigException(ex);
         }
+    }
+
+    @Override
+    public <E> List<E> getListOf(final Class<E> type, final String attrName) {
+        final JsonNode json = this.data.get(attrName);
+        if (json == null) {
+            throw new ConfigException("Attribute " + attrName + " is required but not set.");
+        }
+        if (!json.isArray()) {
+            throw new ConfigException("Attribute " + attrName + " must be an array.");
+        }
+
+        final ArrayList<E> list = new ArrayList<>();
+        for (final JsonNode element : json) {  // |json| should be ArrayNode.
+            try {
+                list.add(this.objectMapper.readValue(element.traverse(), type));
+            } catch (final IOException ex) {
+                throw new ConfigException(ex);
+            }
+        }
+
+        return Collections.unmodifiableList(list);
     }
 
     @Override
@@ -237,16 +276,25 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
     /**
      * Implements {@code DataSource#toJson} for Embulk v0.10.3+.
      *
-     * <p>Embulk v0.10.2 or earlier does not have {@code DataSource#toJson} -- it should not {@code @Override} for the time being.
+     * <p>Embulk v0.10.2 or earlier does not have {@code DataSource#toJson}.
      */
-    // TODO: Enable @Override after most plugins start using embulk-util-config.
-    // @Override
+    @Override
     public String toJson() {
         try {
             return this.objectMapper.writeValueAsString(this.data);
         } catch (final JsonProcessingException ex) {
             throw new ConfigException(ex);
         }
+    }
+
+    /**
+     * Implements {@code DataSource#toMap} for Embulk v0.10.41+.
+     *
+     * <p>Embulk v0.10.40 or earlier does not have {@code DataSource#toMap}.
+     */
+    @Override
+    public Map<String, Object> toMap() {
+        return nodeToMap(this.data);
     }
 
     /**
@@ -403,6 +451,47 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
                 src.remove(i);
                 src.insert(i, v);
             }
+        }
+    }
+
+    private static Map<String, Object> nodeToMap(final ObjectNode object) {
+        final LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+        for (final Map.Entry<String, JsonNode> field : (Iterable<Map.Entry<String, JsonNode>>) () -> object.fields()) {
+            map.put(field.getKey(), nodeToJavaObject(field.getValue()));
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+    private static List<Object> nodeToList(final ArrayNode array) {
+        final ArrayList<Object> list = new ArrayList<>();
+        for (final JsonNode element : (Iterable<JsonNode>) () -> array.elements()) {
+            list.add(nodeToJavaObject(element));
+        }
+        return Collections.unmodifiableList(list);
+    }
+
+    private static Object nodeToJavaObject(final JsonNode json) {
+        switch (json.getNodeType()) {
+            case ARRAY:
+                return nodeToList((ArrayNode) json);
+            case BINARY:
+                return json.asText();
+            case BOOLEAN:
+                return json.booleanValue();
+            case MISSING:
+                throw new ConfigException("Unexpected JSON node type MISSING in DataSouce.");
+            case NULL:
+                return null;  // LinkedHashMap accepts null as a value.
+            case NUMBER:
+                return json.numberValue();
+            case OBJECT:
+                return nodeToMap((ObjectNode) json);
+            case POJO:
+                throw new ConfigException("Unexpected JSON node type POJO in DataSouce.");
+            case STRING:
+                return json.asText();
+            default:
+                throw new ConfigException("Unknown JSON node type in DataSouce.");
         }
     }
 
