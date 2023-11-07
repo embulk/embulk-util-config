@@ -18,6 +18,7 @@ package org.embulk.util.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -62,6 +63,101 @@ public class TestDataSourceImpl {
         assertEquals(124L, listOfIntegers.get(0));
         assertEquals(-4014L, listOfIntegers.get(1));
         assertEquals(9241L, listOfIntegers.get(2));
+    }
+
+    @Test
+    public void testToMap() {
+        final DataSourceImpl impl = createTestNode();
+        final Map<String, Object> root = impl.toMap();
+        assertEquals(8, root.size());
+        assertThrows(UnsupportedOperationException.class, () -> {  // Unmodifiable.
+            root.put("invalid", "put");
+        });
+
+        assertTrue(root.containsKey("string"));
+        assertTrue(root.containsKey("boolean"));
+        assertTrue(root.containsKey("int"));
+        assertTrue(root.containsKey("double"));
+        assertTrue(root.containsKey("array"));
+        assertTrue(root.containsKey("arrayOfStrings"));
+        assertTrue(root.containsKey("arrayOfIntegers"));
+        assertTrue(root.containsKey("object"));
+
+        assertTrue(root.get("string") instanceof String);
+        assertEquals("foo", root.get("string"));
+        assertTrue(root.get("boolean") instanceof Boolean);
+        assertEquals(true, root.get("boolean"));
+        assertTrue(root.get("int") instanceof Integer);
+        assertEquals(12, root.get("int"));
+        assertTrue(root.get("double") instanceof Double);
+        assertEquals(42914.142, root.get("double"));
+
+        assertTrue(root.get("array") instanceof List);
+        final List<Object> array = (List<Object>) root.get("array");
+        assertThrows(UnsupportedOperationException.class, () -> {  // Unmodifiable.
+            array.add("invalid");
+        });
+        assertEquals(4, array.size());
+        assertTrue(array.get(0) instanceof String);
+        assertEquals("hoge", array.get(0));
+        assertTrue(array.get(1) instanceof String);
+        assertEquals("fuga", array.get(1));
+        assertTrue(array.get(2) instanceof Map);
+        final Map<String, Object> objectInArray = (Map<String, Object>) array.get(2);
+        assertThrows(UnsupportedOperationException.class, () -> {  // Unmodifiable.
+            objectInArray.put("invalid", "put");
+        });
+        assertEquals(1, objectInArray.size());
+        assertTrue(objectInArray.containsKey("subkey1"));
+        assertTrue(objectInArray.get("subkey1") instanceof String);
+        assertEquals("something", objectInArray.get("subkey1"));
+        assertTrue(array.get(3) instanceof List);
+        final List<Object> arrayInArray = (List<Object>) array.get(3);
+        assertThrows(UnsupportedOperationException.class, () -> {  // Unmodifiable.
+            arrayInArray.add("invalid");
+        });
+        assertEquals(1, arrayInArray.size());
+        assertTrue(arrayInArray.get(0) instanceof String);
+        assertEquals("somewhat", arrayInArray.get(0));
+
+        assertTrue(root.get("arrayOfStrings") instanceof List);
+        final List<Object> arrayOfStrings = (List<Object>) root.get("arrayOfStrings");
+        assertThrows(UnsupportedOperationException.class, () -> {  // Unmodifiable.
+            arrayOfStrings.add("invalid");
+        });
+        assertEquals(3, arrayOfStrings.size());
+        assertTrue(arrayOfStrings.get(0) instanceof String);
+        assertEquals("foo", arrayOfStrings.get(0));
+        assertTrue(arrayOfStrings.get(1) instanceof String);
+        assertEquals("bar", arrayOfStrings.get(1));
+        assertTrue(arrayOfStrings.get(2) instanceof String);
+        assertEquals("baz", arrayOfStrings.get(2));
+
+        assertTrue(root.get("arrayOfIntegers") instanceof List);
+        final List<Object> arrayOfIntegers = (List<Object>) root.get("arrayOfIntegers");
+        assertThrows(UnsupportedOperationException.class, () -> {  // Unmodifiable.
+            arrayOfIntegers.add("invalid");
+        });
+        assertEquals(3, arrayOfIntegers.size());
+        assertTrue(arrayOfIntegers.get(0) instanceof Integer);
+        assertEquals(124, arrayOfIntegers.get(0));
+        assertTrue(arrayOfIntegers.get(1) instanceof Integer);
+        assertEquals(-4014, arrayOfIntegers.get(1));
+        assertTrue(arrayOfIntegers.get(2) instanceof Integer);
+        assertEquals(9241, arrayOfIntegers.get(2));
+
+        assertTrue(root.get("object") instanceof Map);
+        final Map<String, Object> object = (Map<String, Object>) root.get("object");
+        assertThrows(UnsupportedOperationException.class, () -> {  // Unmodifiable.
+            object.put("invalid", "put");
+        });
+        assertEquals(2, object.size());
+        assertTrue(object.containsKey("key1"));
+        assertTrue(object.get("key1") instanceof String);
+        assertEquals("value1", object.get("key1"));
+        assertTrue(object.containsKey("key2"));
+        assertTrue(object.get("key2") instanceof String);
+        assertEquals("value2", object.get("key2"));
     }
 
     @Test
