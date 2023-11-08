@@ -20,8 +20,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Optional;
 import org.embulk.config.DataSource;
 import org.embulk.util.config.rebuild.ObjectNodeRebuilder;
@@ -37,23 +39,60 @@ final class Compat {
     }
 
     /**
-     * Rebuilds a stringified JSON representation from {@code org.embulk.config.DataSource}.
+     * Rebuilds an {@code ObjectNode} from {@code org.embulk.config.DataSource}.
      */
-    static String toJson(final DataSource source) throws IOException {
-        final Optional<String> jsonString = callToJsonIfAvailable(source);
+    static ObjectNode toObjectNode(final DataSource source) {
+        final Optional<Map<String, Object>> map;
+        try {
+            map = callToMapIfAvailable(source);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Unexpected failure in retrieving Map from DataSource.", ex);
+        }
+        if (map.isPresent()) {
+            // In case of newer Embulk versions since v0.10.41, `DataSource` has the `toMap` method.
+            // And, also if the plugin's embulk-util-config implements `toMap`, it returns a valid Map value.
+            //
+            // In this case, it uses the straightforward `toMap` method to convert into a Map representation.
+            final JsonNode jsonNode;
+            try {
+                jsonNode = SIMPLE_MAPPER.valueToTree(map.get());
+            } catch (final IllegalArgumentException ex) {
+                throw ex;
+            }
+            if (!jsonNode.isObject()) {
+                throw new new ClassCastException("DataSource should be only JSON object.");
+            }
+            return (ObjectNode) jsonNode;
+        }
+
+        final Optional<String> jsonString;
+        try {
+            jsonString = callToJsonIfAvailable(source);
+        } catch (final IOException ex) {
+            throw new UncheckedIOException("Unexpected failure in retrieving stringified JSON from DataSource.", ex);
+        }
         if (jsonString.isPresent()) {
             // In case of newer Embulk versions since v0.10.3 -- `DataSource` has the `toJson` method.
+            // And, also if the plugin's embulk-util-config implements `toJson`, it returns a valid stringified JSON.
             //
             // In this case, it uses the straightforward `toJson` method to convert into a JSON representation.
-            return jsonString.get();
+            final JsonNode jsonNode;
+            try {
+                jsonNode = this.objectMapper.readValue(jsonString, JsonNode.class);
+            } catch (final IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+            if (!jsonNode.isObject()) {
+                throw new new ClassCastException("DataSource should be only JSON object.");
+            }
+            return (ObjectNode) jsonNode;
         }
 
         // In case of older Embulk versions than v0.10.3 -- the `toJson` method is not defined in `DataSource`.
         //
         // In this case, it exploits a hack -- it uses the `getObjectNode` method that is only in `DataSourceImpl`
         // since Embulk v0.10.2.
-        final ObjectNode objectNode = callGetObjectNodeAndRebuildIfAvailable(source, SIMPLE_MAPPER);
-        return SIMPLE_MAPPER.writeValueAsString(objectNode);  // It can throw JsonProcessingException extending IOException.
+        return callGetObjectNodeAndRebuildIfAvailable(source, SIMPLE_MAPPER);
     }
 
     /**
@@ -92,6 +131,46 @@ final class Compat {
         // In this case, it exploits a hack -- it uses the `getObjectNode` method that is only in `DataSourceImpl`
         // since Embulk v0.10.2.
         return callGetObjectNodeAndRebuildIfAvailable(source, SIMPLE_MAPPER);
+    }
+
+    private static Optional<Map<String, Object>> callToMapIfAvailable(final DataSource source) {
+        final Method toMap = getToMapMethod(source);
+        if (toMap == null) {
+            return Optional.empty();
+        }
+
+        final Object mapObject;
+        try {
+            mapObject = toMap.invoke(source);
+        } catch (final InvocationTargetException ex) {
+            final Throwable targetException = ex.getTargetException();
+            if (targetException instanceof UnsupportedOperationException) {
+                // If the plugin's embulk-util-config does not implement toMap, it cannot retrieve a Map representation.
+                return Optional.empty();
+            }
+            if (targetException instanceof RuntimeException) {
+                throw (RuntimeException) targetException;
+            }
+            if (targetException instanceof Error) {
+                throw (Error) targetException;
+            }
+            throw new IllegalStateException("DataSource(Impl)#toMap() threw unexpected Exception.", targetException);
+        } catch (final IllegalAccessException ex) {
+            logger.debug("DataSource(Impl)#toMap is not accessible unexpectedly. DataSource: {}, toMap: {}, ",
+                         source.getClass(), toMap);
+            throw new IllegalStateException("DataSource(Impl)#toMap() is not accessible.", ex);
+        }
+
+        if (mapObject == null) {
+            throw new NullPointerException("DataSource(Impl)#toMap() returned null.");
+        }
+        if (!(mapObject instanceof Map)) {
+            throw new ClassCastException(
+                    "DataSource(Impl)#toMap() returned not a Map: "
+                    + mapObject.getClass().getCanonicalName());
+        }
+
+        return Optional.of((Map<String, Object>) mapObject);
     }
 
     private static Optional<String> callToJsonIfAvailable(final DataSource source) {
@@ -168,6 +247,46 @@ final class Compat {
         }
 
         return ObjectNodeRebuilder.rebuild(coreObjectNode, mapper);
+    }
+
+    private static Method getToMapMethod(final DataSource source) {
+        try {
+            // Getting the "toMap" method from embulk-spi's public interface "org.embulk.config.DataSource", not from an implementation class,
+            // for example "org.embulk.(util.)config.DataSourceImpl", so that invoking the method does not throw IllegalAccessException.
+            //
+            // If the method instance is retrieved from a non-public implementation class, invoking it can fail like:
+            //   java.lang.IllegalAccessException:
+            //   Class org.embulk.util.config.Compat can not access a member of class org.embulk.util.config.DataSourceImpl with modifiers "public"
+            //
+            // See also:
+            // https://stackoverflow.com/questions/25020756/java-lang-illegalaccessexception-can-not-access-a-member-of-class-java-util-col
+            //
+            // A method instance retrieved from the public interface "org.embulk.config.DataSource" would solve the problem.
+            return DataSource.class.getMethod("toMap");
+        } catch (final NoSuchMethodException ex) {
+            // Expected: toMap is not defined in "org.embulk.config.DataSource" when a user is running
+            // Embulk v0.10.40 or earlier.
+            //
+            // Even in the case, the received DataSource instance can still be of embulk-util-config's
+            // "org.embulk.util.config.DataSourceImpl" from another plugin (ex. input <=> parser), or
+            // from itself. As "org.embulk.util.config.DataSourceImpl" does not have "getObjectNode",
+            // it must still be rebuilt with "toMap" retrieved in some way.
+            //
+            // Pass-through to the next trial to retrieve the "toMap" method, then.
+        }
+
+        final Class<? extends DataSource> dataSourceImplClass = source.getClass();
+        try {
+            // Getting the "toMap" method from the implementation class embulk-core's "org.embulk.config.DataSourceImpl",
+            // or embulk-util-config's "org.embulk.util.config.DataSourceImpl".
+            return dataSourceImplClass.getMethod("toMap");
+        } catch (final NoSuchMethodException ex) {
+            // Still expected: toMap is not defined in embulk-core's "org.embulk.config.DataSourceImpl"
+            // in Embulk v0.10.40 or earlier.
+            //
+            // Returning null in this case so that it fallbacks to call the "toJson" method instead.
+            return null;
+        }
     }
 
     private static Method getToJsonMethod(final DataSource source) {

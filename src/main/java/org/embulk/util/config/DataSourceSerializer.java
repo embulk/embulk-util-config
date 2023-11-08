@@ -41,6 +41,7 @@ final class DataSourceSerializer<T extends DataSource> extends JsonSerializer<T>
             throw new JsonGenerationException(new NullPointerException(
                     "DataSourceSerializer#serialize accepts only non-null value."));
         }
+
         final String valueJsonStringified;
         try {
             valueJsonStringified = Compat.toJson(value);  // TODO: DataSource#toJson

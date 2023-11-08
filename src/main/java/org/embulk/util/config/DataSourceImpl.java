@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -182,25 +183,29 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
         if (v == null) {
             this.data.set(attrName, null);
         } else {
-            final String vJsonStringified;
+            final ObjectNode node;
             try {
-                vJsonStringified = Compat.toJson(v);  // TODO: DataSource#toJson
-            } catch (final IOException ex) {
-                throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
+                node = Compat.toObjectNode(v);
+            } catch (final ClassCastException ex) {
+                throw new ConfigException(
+                        "Unexpected failure in embulk-util-config: DataSource encoded into not a valid JSON object.", ex);
+            } catch (final IllegalArgumentException ex) {
+                throw new ConfigException(
+                        "Unexpected failure in embulk-util-config: DataSource encoded into an invalid Map.", ex);
+            } catch (final IllegalStateException ex) {
+                throw new ConfigException(
+                        "Unexpected failure in embulk-util-config: DataSource#getObjectNode.", ex);
+            } catch (final UncheckedIOException ex) {
+                throw new ConfigException(
+                        "Unexpected failure in embulk-util-config: DataSource cannot be encoded.", ex);
+            } catch (final UnsupportedOperationException ex) {
+                throw new ConfigException(
+                        "Unexpected failure in embulk-util-config: DataSource does not implement toMap, toJson, getObjectNode.", ex);
+            } catch (final RuntimeException ex) {
+                throw new ConfigException(
+                        "Unexpected failure in embulk-util-config: unknown error.", ex);
             }
-            if (vJsonStringified == null) {
-                throw new ConfigException(new NullPointerException("DataSource#setNested accepts only valid DataSource."));
-            }
-            final JsonNode vJsonNode;
-            try {
-                vJsonNode = this.objectMapper.readValue(vJsonStringified, JsonNode.class);
-            } catch (final IOException ex) {
-                throw new ConfigException(ex);
-            }
-            if (!vJsonNode.isObject()) {
-                throw new ConfigException(new ClassCastException("DataSource#setNested accepts only valid JSON object."));
-            }
-            this.data.set(attrName, (ObjectNode) vJsonNode);
+            this.data.set(attrName, node);
         }
         return this;
     }
@@ -210,25 +215,28 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
         if (other == null) {
             throw new ConfigException(new NullPointerException("DataSource#setAll accepts only non-null value."));
         }
-        final String otherJsonStringified;
+        final ObjectNode otherObjectNode;
         try {
-            otherJsonStringified = Compat.toJson(other);  // TODO: DataSource#toJson
-        } catch (final IOException ex) {
-            throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
+            node = Compat.toObjectNode(v);
+        } catch (final ClassCastException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource encoded into not a valid JSON object.", ex);
+        } catch (final IllegalArgumentException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource encoded into an invalid Map.", ex);
+        } catch (final IllegalStateException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource#getObjectNode.", ex);
+        } catch (final UncheckedIOException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource cannot be encoded.", ex);
+        } catch (final UnsupportedOperationException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource does not implement toMap, toJson, getObjectNode.", ex);
+        } catch (final RuntimeException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: unknown error.", ex);
         }
-        if (otherJsonStringified == null) {
-            throw new ConfigException(new NullPointerException("DataSource#setAll accepts only valid DataSource."));
-        }
-        final JsonNode otherJsonNode;
-        try {
-            otherJsonNode = this.objectMapper.readValue(otherJsonStringified, JsonNode.class);
-        } catch (final IOException ex) {
-            throw new ConfigException(ex);
-        }
-        if (!otherJsonNode.isObject()) {
-            throw new ConfigException(new ClassCastException("DataSource#setAll accepts only valid JSON object."));
-        }
-        final ObjectNode otherObjectNode = (ObjectNode) otherJsonNode;
         for (final Map.Entry<String, JsonNode> field : (Iterable<Map.Entry<String, JsonNode>>) () -> otherObjectNode.fields()) {
             this.data.set(field.getKey(), field.getValue());
         }
@@ -251,25 +259,29 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
         if (other == null) {
             throw new ConfigException(new NullPointerException("DataSource#merge accepts only non-null value."));
         }
-        final String otherJsonStringified;
+        final ObjectNode node;
         try {
-            otherJsonStringified = Compat.toJson(other);  // DataSource#toJson
-        } catch (final IOException ex) {
-            throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
+            node = Compat.toObjectNode(v);
+        } catch (final ClassCastException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource encoded into not a valid JSON object.", ex);
+        } catch (final IllegalArgumentException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource encoded into an invalid Map.", ex);
+        } catch (final IllegalStateException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource#getObjectNode.", ex);
+        } catch (final UncheckedIOException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource cannot be encoded.", ex);
+        } catch (final UnsupportedOperationException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: DataSource does not implement toMap, toJson, getObjectNode.", ex);
+        } catch (final RuntimeException ex) {
+            throw new ConfigException(
+                    "Unexpected failure in embulk-util-config: unknown error.", ex);
         }
-        if (otherJsonStringified == null) {
-            throw new ConfigException(new NullPointerException("DataSource#merge accepts only valid DataSource."));
-        }
-        final JsonNode otherJsonNode;
-        try {
-            otherJsonNode = this.objectMapper.readValue(otherJsonStringified, JsonNode.class);
-        } catch (final IOException ex) {
-            throw new ConfigException(ex);
-        }
-        if (!otherJsonNode.isObject()) {
-            throw new ConfigException(new ClassCastException("DataSource#setAll accepts only valid JSON object."));
-        }
-        mergeJsonObject(data, (ObjectNode) otherJsonNode);
+        mergeJsonObject(data, node);
         return this;
     }
 
@@ -394,25 +406,13 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
             return false;
         }
         final DataSource otherDataSource = (DataSource) other;
-        final String otherJsonStringified;
+        final ObjectNode node;
         try {
-            otherJsonStringified = Compat.toJson(otherDataSource);  // TODO: DataSource#toJson
-        } catch (final IOException ex) {
-            throw new ConfigException("Unexpected failure in stringifying DataSource as JSON.", ex);
-        }
-        if (otherJsonStringified == null) {
+            node = Compat.toObjectNode(otherDataSource);
+        } catch (final RuntimeException ex) {
             return false;
         }
-        final JsonNode otherJsonNode;
-        try {
-            otherJsonNode = this.objectMapper.readValue(otherJsonStringified, JsonNode.class);
-        } catch (final IOException ex) {
-            return false;
-        }
-        if (!otherJsonNode.isObject()) {
-            return false;
-        }
-        return this.data.equals((ObjectNode) otherJsonNode);
+        return this.data.equals(node);
     }
 
     @Override
