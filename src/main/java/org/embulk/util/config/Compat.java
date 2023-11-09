@@ -105,6 +105,10 @@ final class Compat {
             jsonStringObject = toJson.invoke(source);
         } catch (final InvocationTargetException ex) {
             final Throwable targetException = ex.getTargetException();
+            if (targetException instanceof UnsupportedOperationException) {
+                // If the plugin's embulk-util-config does not implement toJson, it cannot retrieve a stringified JSON.
+                return Optional.empty();
+            }
             if (targetException instanceof RuntimeException) {
                 throw (RuntimeException) targetException;
             }
