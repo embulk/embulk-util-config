@@ -31,11 +31,11 @@ public class TestVersion {
                      Version.parseVersionForTesting("14.139-SNAPSHOT"));
         assertEquals(new com.fasterxml.jackson.core.Version(103, 0, 0, "SNAPSHOT-A", "org.embulk", "embulk-util-config"),
                      Version.parseVersionForTesting("103-SNAPSHOT-A"));
-        assertEquals(new com.fasterxml.jackson.core.Version(5, 3, 1, "", "org.embulk", "embulk-util-config"),
+        assertEquals(new com.fasterxml.jackson.core.Version(5, 3, 1, null, "org.embulk", "embulk-util-config"),
                      Version.parseVersionForTesting("5.3.1"));
-        assertEquals(new com.fasterxml.jackson.core.Version(9, 8, 0, "", "org.embulk", "embulk-util-config"),
+        assertEquals(new com.fasterxml.jackson.core.Version(9, 8, 0, null, "org.embulk", "embulk-util-config"),
                      Version.parseVersionForTesting("9.8"));
-        assertEquals(new com.fasterxml.jackson.core.Version(4, 0, 0, "", "org.embulk", "embulk-util-config"),
+        assertEquals(new com.fasterxml.jackson.core.Version(4, 0, 0, null, "org.embulk", "embulk-util-config"),
                      Version.parseVersionForTesting("4"));
 
         assertThrows(IllegalArgumentException.class, () -> Version.parseVersionForTesting(""));
