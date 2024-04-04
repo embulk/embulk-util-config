@@ -114,9 +114,9 @@ javadoc {
         links "https://docs.oracle.com/javase/8/docs/api/"
         links "https://docs.oracle.com/javaee/7/api/"
         links "https://dev.embulk.org/embulk-spi/0.11/javadoc/"
-        links "https://fasterxml.github.io/jackson-core/javadoc/2.6/"
-        links "https://fasterxml.github.io/jackson-databind/javadoc/2.6/"
-        links "https://fasterxml.github.io/jackson-datatype-jdk8/javadoc/2.6/"
+        links "https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/2.15.3/"
+        links "https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.15.3/"
+        links "https://javadoc.io/doc/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/2.15.3/"
     }
 }
 
