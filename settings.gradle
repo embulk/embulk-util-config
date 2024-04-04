@@ -1,1 +1,20 @@
 rootProject.name = "embulk-util-config"
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        testLibs {
+            def jacksonVersion = version("jackson", providers.gradleProperty("jacksonVersionForJacksonTest").getOrElse("2.15.3"))
+
+            library("jackson-bom", "com.fasterxml.jackson", "jackson-bom").versionRef(jacksonVersion)
+
+            library("jackson-annotations", "com.fasterxml.jackson.core", "jackson-annotations").withoutVersion()
+            library("jackson-core", "com.fasterxml.jackson.core", "jackson-core").withoutVersion()
+            library("jackson-databind", "com.fasterxml.jackson.core", "jackson-databind").withoutVersion()
+
+            // Required for java.util.Optional.
+            library("jackson-datatype-jdk8", "com.fasterxml.jackson.datatype", "jackson-datatype-jdk8").withoutVersion()
+
+            bundle("jackson", [ "jackson-annotations", "jackson-core", "jackson-databind", "jackson-datatype-jdk8" ])
+        }
+    }
+}
