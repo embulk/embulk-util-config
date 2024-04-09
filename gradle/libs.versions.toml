@@ -1,7 +1,7 @@
 [versions]
 embulk-spi = "0.11"
 slf4j-api = "2.0.7"
-validation-api = "1.1.0.Final"
+validation-api = "2.0.1.Final"
 
 # See https://github.com/FasterXML/jackson/wiki/Jackson-Releases for Jackson versions.
 #
