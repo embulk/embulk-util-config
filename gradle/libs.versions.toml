@@ -3,9 +3,15 @@ embulk-spi = "0.11"
 slf4j-api = "2.0.7"
 validation-api = "1.1.0.Final"
 
-# Jackson needs to be higher than 2.5.13.
+# See https://github.com/FasterXML/jackson/wiki/Jackson-Releases for Jackson versions.
+#
+# We choose Jackson versions :
+# - require: the latest patch release of the oldest (non-nominally) open branch
+# - prefer: the latest patch release of the latest open branch
+#
+# It has required at least Jackson 2.15.3, especially since embulk-util-config 0.4.0.
 # It is to align with the restriction of embulk-util-json: https://github.com/embulk/embulk-util-json/pull/37
-jackson = { require = "2.15.3", prefer = "2.16.2" }
+jackson = { require = "2.15.4", prefer = "2.16.2" }
 
 junit4 = "4.13.2"
 junit5 = "5.10.0"
