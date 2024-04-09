@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Optional;
 import javax.validation.Validation;
 import javax.validation.constraints.Max;
-
 import org.apache.bval.jsr303.ApacheValidationProvider;
 import org.embulk.test.EmbulkTestRuntime;
 import org.embulk.util.config.Config;
