@@ -1,6 +1,11 @@
 [versions]
 embulk-spi = "0.11"
 slf4j-api = "2.0.7"
+
+# See https://beanvalidation.org/2.0-jsr380/ for the Bean Validation 2.0.
+#
+# We do not upgrade it to 3.0 as of now because 3.0 is provided in a different namespace jakarta.validation.
+# The migration to jakarta.validation would be planned later on.
 validation-api = "2.0.1.Final"
 
 # See https://github.com/FasterXML/jackson/wiki/Jackson-Releases for Jackson versions.
