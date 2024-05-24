@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.embulk.config.DataSource;
@@ -46,7 +47,7 @@ final class Compat {
             // In case of newer Embulk versions since v0.10.41 -- `DataSource` has the `toMap` method.
             //
             // In this case, it uses the straightforward `toMap` method to convert into a Map.
-            return map.get();
+            return normalizeMap(map.get());
         }
 
         // In case of older Embulk versions than v0.10.41 -- the `toMap` method is not defined in `DataSource`.
@@ -336,9 +337,34 @@ final class Compat {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> normalizeMap(final Map map) {
-        // TODO: Validate the map.
+    private static Map<String, Object> normalizeMap(final Map<?, ?> map) {
+        for (final Map.Entry<?, ?> entry : map.entrySet()) {
+            final Object key = entry.getKey();
+            if (key == null || !(entry.getKey() instanceof String)) {
+                throw new ClassCastException("Key in DataSource(Impl)#toMap is not a String.");
+            }
+            validateValue(entry.getValue());
+        }
         return (Map<String, Object>) map;
+    }
+
+    private static void validateList(final List list) {
+        for (final Object element : list) {
+            validateValue(element);
+        }
+    }
+
+    private static void validateValue(final Object object) {
+        if (object == null) {
+            return;
+        } else if (object instanceof Map) {
+            normalizeMap((Map) object);
+        } else if (object instanceof List) {
+            validateList((List) object);
+        } else if (object instanceof String || object instanceof Number || object instanceof Boolean) {
+            return;
+        }
+        throw new ClassCastException("Value in DataSource(Impl)#toMap is an unexpected object.");
     }
 
     private static final ObjectMapper SIMPLE_MAPPER = new ObjectMapper();
