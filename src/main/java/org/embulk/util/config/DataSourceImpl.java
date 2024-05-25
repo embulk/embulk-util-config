@@ -454,7 +454,8 @@ public final class DataSourceImpl implements ConfigSource, TaskSource, TaskRepor
         }
     }
 
-    private static Map<String, Object> nodeToMap(final ObjectNode object) {
+    // Not private for Compat.toMap.
+    static Map<String, Object> nodeToMap(final ObjectNode object) {
         final LinkedHashMap<String, Object> map = new LinkedHashMap<>();
         for (final Map.Entry<String, JsonNode> field : (Iterable<Map.Entry<String, JsonNode>>) () -> object.fields()) {
             map.put(field.getKey(), nodeToJavaObject(field.getValue()));

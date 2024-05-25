@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import org.junit.jupiter.api.Test;
 
 public class TestCompat {
@@ -30,6 +31,17 @@ public class TestCompat {
         node.put("foo", "bar");
         final DataSourceImpl impl = new DataSourceImpl(node, SIMPLE_MAPPER);
         assertEquals("{\"foo\":\"bar\"}", Compat.toJson(impl));
+    }
+
+    @Test
+    public void testToMap() throws IOException {
+        final ObjectNode node = SIMPLE_MAPPER.createObjectNode();
+        node.put("foo", "bar");
+        final DataSourceImpl impl = new DataSourceImpl(node, SIMPLE_MAPPER);
+
+        final LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("foo", "bar");
+        assertEquals(expected, Compat.toMap(impl));
     }
 
     private static final ObjectMapper SIMPLE_MAPPER = new ObjectMapper();
