@@ -100,9 +100,23 @@ final class Compat {
             return Optional.empty();
         }
 
-        final Object jsonStringObject;
+        final Object jsonStringObject = invokeToJson(source, toJson);
+
+        if (jsonStringObject == null) {
+            throw new NullPointerException("org.embulk.config.DataSource#toJson() returned null.");
+        }
+        if (!(jsonStringObject instanceof String)) {
+            throw new ClassCastException(
+                    "org.embulk.config.DataSource#toJson() returned not a String: "
+                    + jsonStringObject.getClass().getCanonicalName());
+        }
+
+        return Optional.of((String) jsonStringObject);
+    }
+
+    private static Object invokeToJson(final DataSource source, final Method toJson) {
         try {
-            jsonStringObject = toJson.invoke(source);
+            return toJson.invoke(source);
         } catch (final InvocationTargetException ex) {
             final Throwable targetException = ex.getTargetException();
             if (targetException instanceof UnsupportedOperationException) {
@@ -117,21 +131,50 @@ final class Compat {
             }
             throw new IllegalStateException("DataSource(Impl)#toJson() threw unexpected Exception.", targetException);
         } catch (final IllegalAccessException ex) {
-            logger.debug("DataSource(Impl)#toJson is not accessible unexpectedly. DataSource: {}, toJson: {}, ",
-                         source.getClass(), toJson);
-            throw new IllegalStateException("DataSource(Impl)#toJson() is not accessible.", ex);
+            // "org.embulk.util.config.DataSourceImpl" fo embulk-util-config 0.1.4 or earlier was package-private,
+            // then invoking "toJson" of "org.embulk.util.config.DataSourceImpl" caused IllegalAccessException.
+            // https://github.com/embulk/embulk-util-config/pull/20
+            //
+            // Pass-through to the next step to setAccessible(true) for the "toJson" Method instance.
         }
 
-        if (jsonStringObject == null) {
-            throw new NullPointerException("DataSource(Impl)#toJson() returned null.");
-        }
-        if (!(jsonStringObject instanceof String)) {
-            throw new ClassCastException(
-                    "DataSource(Impl)#toJson() returned not a String: "
-                    + jsonStringObject.getClass().getCanonicalName());
-        }
+        logger.warn("DataSource(Impl)#toJson is not accessible unexpectedly. DataSource class: {}, toJson method: {}",
+                    source.getClass(), toJson);
+        logger.warn("The plugin or another plugin is estimated to be using embulk-util-config:0.1.4 or earlier.");
+        logger.warn("To workaround it, trying to invoke toJson forcibly by Method#setAccessible(true).");
 
-        return Optional.of((String) jsonStringObject);
+        synchronized (toJson) {
+            try {
+                toJson.setAccessible(true);
+            } catch (final SecurityException ex) {
+                throw new IllegalStateException(
+                        "Method#setAccessible(true) is forbidden for thie method DataSource(Impl)#toJson. "
+                            + "DataSource class: " + source.getClass().toString()
+                            + "toJson method: " + toJson.toString(),
+                        ex);
+            }
+
+            try {
+                return toJson.invoke(source);
+            } catch (final InvocationTargetException ex) {
+                final Throwable targetException = ex.getTargetException();
+                if (targetException instanceof RuntimeException) {
+                    throw (RuntimeException) targetException;
+                }
+                if (targetException instanceof Error) {
+                    throw (Error) targetException;
+                }
+                throw new IllegalStateException("DataSource#toJson() threw unexpected Exception.", targetException);
+            } catch (final IllegalAccessException ex) {
+                throw new IllegalStateException(
+                        "DataSource(Impl)#toJson is not accessible even after Method#setAccessible(true). "
+                            + "DataSource class: " + source.getClass().toString()
+                            + "toJson method: " + toJson.toString(),
+                        ex);
+            } finally {
+                toJson.setAccessible(false);
+            }
+        }
     }
 
     private static ObjectNode callGetObjectNodeAndRebuildIfAvailable(final DataSource source, final ObjectMapper mapper) {
